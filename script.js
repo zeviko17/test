@@ -90,10 +90,8 @@ document.getElementById('sendButton').addEventListener('click', async function (
         // שליחת תמונה
         if (hasImage) {
             const imageUrl = imageUrlElement.value.trim();
-            const imageData = {
-                chatId: groupId,
-                caption: 'תמונה נחמדה של כלב',
-                urlFile: imageUrl
+            $1,
+    fileName: 'image.jpg'
             };
 
             console.log('Sending image with data:', imageData);
