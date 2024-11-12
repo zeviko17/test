@@ -7,7 +7,7 @@ document.getElementById('sendButton').addEventListener('click', function () {
     const apiTokenInstance = '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae';
 
     // כתובת הבסיס של ה-API
-    const apiBaseUrl = `https://api.green-api.com/waInstance${idInstance}/sendMessage`;
+    const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
 
     // מבנה הבקשה
     const data = {
@@ -19,8 +19,7 @@ document.getElementById('sendButton').addEventListener('click', function () {
     fetch(apiBaseUrl, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiTokenInstance}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     })
