@@ -58,7 +58,13 @@ document.getElementById('sendButton').addEventListener('click', async function (
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const responseData = await response.json();
-        console.log('Message sent successfully:', responseData);
+
+        // בדיקת תגובת Green API
+        if (responseData.error) {
+            console.error('Failed to send message:', responseData);
+        } else {
+            console.log('Message sent successfully:', responseData);
+        }
     } catch (error) {
         console.error('Error in sendMessage:', error);
     }
