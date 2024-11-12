@@ -31,11 +31,7 @@ document.getElementById('sendButton').addEventListener('click', function () {
         return response.json();
     })
     .then(data => {
-        if (data.error) {
-            console.error('Error:', data.error);
-        } else {
-            console.log('Message sent successfully:', data);
-        }
+        console.log('Message sent:', data);
     })
     .catch((error) => {
         console.error('Error:', error);
