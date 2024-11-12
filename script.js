@@ -5,14 +5,42 @@ document.getElementById('sendButton').addEventListener('click', async function (
     const idInstance = '7103962196';
     const apiTokenInstance = '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae';
 
-    // כתובת הבסיס של ה-API
+    // כתובות ה-API
     const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
     const apiStatusUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance}`;
     const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
+    const apiHistoryUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessageHistory/${apiTokenInstance}`;
 
     // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
     const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
     const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
+
+    async function checkMessageStatus(idMessage, groupId) {
+        try {
+            const response = await fetch(apiHistoryUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "chatId": groupId,
+                    "count": 5
+                })
+            });
+            
+            if (!response.ok) {
+                return false;
+            }
+
+            const historyData = await response.json();
+            const message = historyData.find(msg => msg.idMessage === idMessage);
+            
+            return message?.status === "delivered";
+        } catch (error) {
+            console.error('Error checking message status:', error);
+            return false;
+        }
+    }
 
     try {
         const sheetResponse = await fetch(googleSheetsUrl);
@@ -38,6 +66,11 @@ document.getElementById('sendButton').addEventListener('click', async function (
             throw new Error('No valid group ID found in cell D2');
         }
 
+        // וידוא שה-groupId מסתיים ב-@g.us
+        if (!groupId.endsWith('@g.us')) {
+            groupId = `${groupId}@g.us`;
+        }
+
         // הצגת ערך התא D2 בלוג
         console.log('Value of cell D2:', groupId);
 
@@ -55,35 +88,29 @@ document.getElementById('sendButton').addEventListener('click', async function (
             },
             body: JSON.stringify(data)
         });
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         let responseData = await response.json();
 
         // בדיקת תגובת Green API להודעה טקסטואלית
-        if (responseData.error) {
-            console.error('Failed to send message:', responseData);
-        } else {
-            console.log('Message sent successfully:', responseData);
-
-            // בדיקת סטטוס ההודעה
-            const idMessage = responseData.idMessage;
-            const statusResponse = await fetch(`${apiStatusUrl}/${idMessage}`, {
-                method: 'GET'
-            });
-            if (!statusResponse.ok) {
-                throw new Error(`HTTP error! status: ${statusResponse.status}`);
-            }
-            const statusData = await statusResponse.json();
-
-            if (statusData.status === 'sent') {
-                console.log('Message status: sent successfully');
+        if (responseData.idMessage) {
+            console.log('Message sent with ID:', responseData.idMessage);
+            
+            // בדיקת סטטוס אמיתי של ההודעה
+            const isDelivered = await checkMessageStatus(responseData.idMessage, groupId);
+            if (isDelivered) {
+                console.log('Message was delivered successfully');
             } else {
-                console.warn('Message status:', statusData.status);
+                console.error('Message was not delivered');
             }
+
+        } else {
+            console.error('Failed to send message:', responseData);
         }
 
-        // שליחת תמונה באמצעות API המתאים
+        // שליחת תמונה
         const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
         const imageData = {
             chatId: groupId,
@@ -100,17 +127,24 @@ document.getElementById('sendButton').addEventListener('click', async function (
             },
             body: JSON.stringify(imageData)
         });
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         responseData = await response.json();
 
         // בדיקת תגובת Green API לתמונה
-        if (responseData.error) {
-            console.error('Failed to send image:', responseData);
+        if (responseData.idMessage) {
+            const isDelivered = await checkMessageStatus(responseData.idMessage, groupId);
+            if (isDelivered) {
+                console.log('Image was delivered successfully');
+            } else {
+                console.error('Image was not delivered');
+            }
         } else {
-            console.log('Image sent successfully:', responseData);
+            console.error('Failed to send image:', responseData);
         }
+
     } catch (error) {
         console.error('Error in sendMessage:', error);
     }
