@@ -1,24 +1,31 @@
-
 document.getElementById('sendButton').addEventListener('click', async function () {
-    const message = 'שלום שלום';
+    const messageElement = document.getElementById('messageText');
+    const message = messageElement.value.trim();
+    if (!message) {
+        console.error('Message text is required');
+        return;
+    }
+
+    const imageUrlElement = document.getElementById('imageUrl');
+    const hasImage = imageUrlElement.value.trim() !== '';
 
     // נתונים שלך מה-Green API
     const idInstance = '7103962196';
     const apiTokenInstance = '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae';
 
     // כתובות ה-API
-    const apiBaseUrl = https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance};
-    const apiStatusUrl = https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance};
-    const apiSendFileUrl = https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance};
+    const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
+    const apiStatusUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance}`;
+    const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
 
     // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
     const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
-    const googleSheetsUrl = https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות;
+    const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
 
     try {
         const sheetResponse = await fetch(googleSheetsUrl);
         if (!sheetResponse.ok) {
-            throw new Error(HTTP error! status: ${sheetResponse.status});
+            throw new Error(`HTTP error! status: ${sheetResponse.status}`);
         }
         const text = await sheetResponse.text();
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
@@ -41,7 +48,7 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
         // וידוא שה-groupId מסתיים ב-@g.us
         if (!groupId.endsWith('@g.us')) {
-            groupId = ${groupId}@g.us;
+            groupId = `${groupId}@g.us`;
         }
 
         // הצגת ערך התא D2 בלוג
@@ -63,7 +70,7 @@ document.getElementById('sendButton').addEventListener('click', async function (
         });
         
         if (!response.ok) {
-            throw new Error(HTTP error! status: ${response.status});
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         let responseData = await response.json();
 
@@ -76,45 +83,49 @@ document.getElementById('sendButton').addEventListener('click', async function (
         }
 
         // המתנה קצרה בין ההודעות
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (hasImage) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
 
         // שליחת תמונה
-        const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
-        const imageData = {
-            chatId: groupId,
-            caption: 'תמונה נחמדה של כלב',
-            urlFile: imageUrl
-        };
+        if (hasImage) {
+            const imageUrl = imageUrlElement.value.trim();
+            const imageData = {
+                chatId: groupId,
+                caption: 'תמונה נחמדה של כלב',
+                urlFile: imageUrl
+            };
 
-        console.log('Sending image with data:', imageData);
-        console.log('To URL:', apiSendFileUrl);
-        
-        response = await fetch(apiSendFileUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(imageData)
-        });
+            console.log('Sending image with data:', imageData);
+            console.log('To URL:', apiSendFileUrl);
+            
+            response = await fetch(apiSendFileUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(imageData)
+            });
 
-        console.log('Image API Response Status:', response.status);
-        const responseText = await response.text();
-        console.log('Image API Response Text:', responseText);
+            console.log('Image API Response Status:', response.status);
+            const responseText = await response.text();
+            console.log('Image API Response Text:', responseText);
 
-        if (!response.ok) {
-            throw new Error(HTTP error! status: ${response.status});
-        }
-        
-        try {
-            responseData = JSON.parse(responseText);
-            if (responseData.idMessage) {
-                console.log('Image sent successfully, ID:', responseData.idMessage);
-            } else {
-                console.error('Failed to send image:', responseData);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        } catch (error) {
-            console.error('Error parsing image response:', error);
-            console.error('Raw response:', responseText);
+            
+            try {
+                responseData = JSON.parse(responseText);
+                if (responseData.idMessage) {
+                    console.log('Image sent successfully, ID:', responseData.idMessage);
+                } else {
+                    console.error('Failed to send image:', responseData);
+                }
+            } catch (error) {
+                console.error('Error parsing image response:', error);
+                console.error('Raw response:', responseText);
+            }
         }
 
     } catch (error) {
