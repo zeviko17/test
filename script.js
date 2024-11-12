@@ -1,5 +1,4 @@
 document.getElementById('sendButton').addEventListener('click', async function () {
-    const groupId = '120363291001444894@g.us';
     const message = 'שלום שלום';
 
     // נתונים שלך מה-Green API
@@ -9,14 +8,28 @@ document.getElementById('sendButton').addEventListener('click', async function (
     // כתובת הבסיס של ה-API
     const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
 
-    // מבנה הבקשה
-    const data = {
-        chatId: groupId,
-        message: message
-    };
+    // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
+    const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
+    const sheetName = 'קבוצות להודעות';
+    const cell = 'D2';
+    const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tq=SELECT%20${cell}`;
 
-    // בדיקת שליחת הודעה
     try {
+        const sheetResponse = await fetch(googleSheetsUrl);
+        if (!sheetResponse.ok) {
+            throw new Error(`HTTP error! status: ${sheetResponse.status}`);
+        }
+        const text = await sheetResponse.text();
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const groupId = json.table.rows[0].c[0].v;
+
+        // מבנה הבקשה
+        const data = {
+            chatId: groupId,
+            message: message
+        };
+
+        // בדיקת שליחת הודעה
         console.log('Testing send message to:', groupId);
         const response = await fetch(apiBaseUrl, {
             method: 'POST',
