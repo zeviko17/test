@@ -1,4 +1,4 @@
-document.getElementById('sendButton').addEventListener('click', function () {
+document.getElementById('sendButton').addEventListener('click', async function () {
     const groupId = '120363291001444894@g.us';
     const message = 'שלום שלום';
 
@@ -15,24 +15,22 @@ document.getElementById('sendButton').addEventListener('click', function () {
         message: message
     };
 
-    // בקשת Fetch עם הגדרת ה-POST
-    fetch(apiBaseUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
+    // בדיקת שליחת הודעה
+    try {
+        console.log('Testing send message to:', groupId);
+        const response = await fetch(apiBaseUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Message sent:', data);
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+        const responseData = await response.json();
+        console.log('Message sent successfully:', responseData);
+    } catch (error) {
+        console.error('Error in sendMessage:', error);
+    }
 });
