@@ -10,9 +10,7 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
     // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
     const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
-    const sheetName = 'קבוצות להודעות';
-    const cell = 'D2';
-    const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tq=SELECT%20${cell}`;
+    const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
 
     try {
         const sheetResponse = await fetch(googleSheetsUrl);
@@ -21,7 +19,10 @@ document.getElementById('sendButton').addEventListener('click', async function (
         }
         const text = await sheetResponse.text();
         const json = JSON.parse(text.substr(47).slice(0, -2));
-        const groupId = json.table.rows[0].c[0].v;
+        const groupId = json.table.rows.find(row => row.c && row.c[3] && row.c[3].v).c[3].v;
+
+        // הצגת ערך התא D2 בלוג
+        console.log('Value of cell D2:', groupId);
 
         // מבנה הבקשה
         const data = {
