@@ -7,6 +7,8 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
     // כתובת הבסיס של ה-API
     const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
+    const apiUploadUrl = `https://7103.media.greenapi.com/waInstance${idInstance}/uploadFile/${apiTokenInstance}`;
+    const apiStatusUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance}`;
 
     // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
     const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
@@ -39,15 +41,14 @@ document.getElementById('sendButton').addEventListener('click', async function (
         // הצגת ערך התא D2 בלוג
         console.log('Value of cell D2:', groupId);
 
-        // מבנה הבקשה
+        // שליחת הודעה טקסטואלית
         const data = {
             chatId: groupId,
             message: message
         };
 
-        // בדיקת שליחת הודעה
         console.log('Testing send message to:', groupId);
-        const response = await fetch(apiBaseUrl, {
+        let response = await fetch(apiBaseUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -57,13 +58,51 @@ document.getElementById('sendButton').addEventListener('click', async function (
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const responseData = await response.json();
+        let responseData = await response.json();
 
-        // בדיקת תגובת Green API
+        // בדיקת תגובת Green API להודעה טקסטואלית
         if (responseData.error) {
             console.error('Failed to send message:', responseData);
         } else {
             console.log('Message sent successfully:', responseData);
+
+            // בדיקת סטטוס ההודעה
+            const idMessage = responseData.idMessage;
+            const statusResponse = await fetch(`${apiStatusUrl}/${idMessage}`, {
+                method: 'GET'
+            });
+            if (!statusResponse.ok) {
+                throw new Error(`HTTP error! status: ${statusResponse.status}`);
+            }
+            const statusData = await statusResponse.json();
+
+            if (statusData.status === 'sent') {
+                console.log('Message status: sent successfully');
+            } else {
+                console.warn('Message status:', statusData.status);
+            }
+        }
+
+        // שליחת תמונה
+        const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
+        const formData = new FormData();
+        formData.append('file', imageUrl);
+
+        console.log('Uploading image to:', groupId);
+        response = await fetch(apiUploadUrl, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        responseData = await response.json();
+
+        // בדיקת תגובת Green API לתמונה
+        if (responseData.error) {
+            console.error('Failed to upload image:', responseData);
+        } else {
+            console.log('Image uploaded successfully:', responseData);
         }
     } catch (error) {
         console.error('Error in sendMessage:', error);
