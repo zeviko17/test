@@ -7,7 +7,6 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
     // כתובת הבסיס של ה-API
     const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
-    const apiUploadUrl = `https://7103.media.greenapi.com/waInstance${idInstance}/uploadFile/${apiTokenInstance}`;
     const apiStatusUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance}`;
 
     // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
@@ -83,15 +82,21 @@ document.getElementById('sendButton').addEventListener('click', async function (
             }
         }
 
-        // שליחת תמונה
+        // שליחת תמונה באמצעות URL
         const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
-        const formData = new FormData();
-        formData.append('file', imageUrl);
+        const imageData = {
+            chatId: groupId,
+            urlFile: imageUrl,
+            caption: 'תמונה נחמדה של כלב'
+        };
 
-        console.log('Uploading image to:', groupId);
-        response = await fetch(apiUploadUrl, {
+        console.log('Sending image to:', groupId);
+        response = await fetch(apiBaseUrl, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(imageData)
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -100,9 +105,9 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
         // בדיקת תגובת Green API לתמונה
         if (responseData.error) {
-            console.error('Failed to upload image:', responseData);
+            console.error('Failed to send image:', responseData);
         } else {
-            console.log('Image uploaded successfully:', responseData);
+            console.log('Image sent successfully:', responseData);
         }
     } catch (error) {
         console.error('Error in sendMessage:', error);
