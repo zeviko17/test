@@ -1,13 +1,13 @@
 document.getElementById('sendButton').addEventListener('click', async function () {
     const messageElement = document.getElementById('messageText');
+    const imageUrlElement = document.getElementById('imageUrl');
     const message = messageElement.value.trim();
+    const imageUrl = imageUrlElement.value.trim();
+
     if (!message) {
         console.error('Message text is required');
         return;
     }
-
-    const imageUrlElement = document.getElementById('imageUrl');
-    const hasImage = imageUrlElement.value.trim() !== '';
 
     // נתונים שלך מה-Green API
     const idInstance = '7103962196';
@@ -82,16 +82,17 @@ document.getElementById('sendButton').addEventListener('click', async function (
             return;
         }
 
-        // המתנה קצרה בין ההודעות
-        if (hasImage) {
+        // אם יש URL של תמונה, שלח גם אותה
+        if (imageUrl) {
+            // המתנה קצרה בין ההודעות
             await new Promise(resolve => setTimeout(resolve, 1000));
-        }
 
-        // שליחת תמונה
-        if (hasImage) {
-            const imageUrl = imageUrlElement.value.trim();
-            $1,
-    fileName: 'image.jpg'
+            // שליחת תמונה
+            const imageData = {
+                chatId: groupId,
+                caption: message,  // שימוש באותה הודעה כמו בטקסט
+                urlFile: imageUrl,
+                fileName: 'image.jpg'  // שדה חובה ל-Green API
             };
 
             console.log('Sending image with data:', imageData);
