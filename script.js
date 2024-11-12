@@ -21,7 +21,7 @@ document.getElementById('sendButton').addEventListener('click', async function (
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
 
         const rows = json.table.rows;
-        const groupIdCell = rows[0].c[3];
+        const groupIdCell = rows[1].c[3]; // גישה לתא D2 (שורה 2)
         let groupId = null;
 
         if (groupIdCell) {
