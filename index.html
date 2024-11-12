@@ -1,14 +1,47 @@
-// ver 0.6
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Send WhatsApp Message to Group</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #25D366;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #128C7E;
+        }
+    </style>
 </head>
 <body>
     <h1>Send WhatsApp Message to Group</h1>
+    <div class="input-group">
+        <label for="messageText">Message Text (required):</label>
+        <input type="text" id="messageText" placeholder="Enter your message" required>
+    </div>
+    <div class="input-group">
+        <label for="imageUrl">Image URL (optional):</label>
+        <input type="text" id="imageUrl" placeholder="Enter image URL (optional)">
+    </div>
     <button id="sendButton">Send Message</button>
     <script src="script.js"></script>
 </body>
