@@ -9,38 +9,10 @@ document.getElementById('sendButton').addEventListener('click', async function (
     const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
     const apiStatusUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance}`;
     const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
-    const apiHistoryUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessageHistory/${apiTokenInstance}`;
 
     // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
     const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
     const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
-
-    async function checkMessageStatus(idMessage, groupId) {
-        try {
-            const response = await fetch(apiHistoryUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    "chatId": groupId,
-                    "count": 5
-                })
-            });
-            
-            if (!response.ok) {
-                return false;
-            }
-
-            const historyData = await response.json();
-            const message = historyData.find(msg => msg.idMessage === idMessage);
-            
-            return message?.status === "delivered";
-        } catch (error) {
-            console.error('Error checking message status:', error);
-            return false;
-        }
-    }
 
     try {
         const sheetResponse = await fetch(googleSheetsUrl);
@@ -96,30 +68,26 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
         // בדיקת תגובת Green API להודעה טקסטואלית
         if (responseData.idMessage) {
-            console.log('Message sent with ID:', responseData.idMessage);
-            
-            // בדיקת סטטוס אמיתי של ההודעה
-            const isDelivered = await checkMessageStatus(responseData.idMessage, groupId);
-            if (isDelivered) {
-                console.log('Message was delivered successfully');
-            } else {
-                console.error('Message was not delivered');
-            }
-
+            console.log('Message sent successfully, ID:', responseData.idMessage);
         } else {
             console.error('Failed to send message:', responseData);
+            return;
         }
+
+        // המתנה קצרה בין ההודעות
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // שליחת תמונה
         const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
         const imageData = {
             chatId: groupId,
-            urlFile: imageUrl,
-            fileName: "image.jpg",
-            caption: 'תמונה נחמדה של כלב'
+            caption: 'תמונה נחמדה של כלב',
+            urlFile: imageUrl
         };
 
-        console.log('Sending image to:', groupId);
+        console.log('Sending image with data:', imageData);
+        console.log('To URL:', apiSendFileUrl);
+        
         response = await fetch(apiSendFileUrl, {
             method: 'POST',
             headers: {
@@ -128,21 +96,24 @@ document.getElementById('sendButton').addEventListener('click', async function (
             body: JSON.stringify(imageData)
         });
 
+        console.log('Image API Response Status:', response.status);
+        const responseText = await response.text();
+        console.log('Image API Response Text:', responseText);
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        responseData = await response.json();
-
-        // בדיקת תגובת Green API לתמונה
-        if (responseData.idMessage) {
-            const isDelivered = await checkMessageStatus(responseData.idMessage, groupId);
-            if (isDelivered) {
-                console.log('Image was delivered successfully');
+        
+        try {
+            responseData = JSON.parse(responseText);
+            if (responseData.idMessage) {
+                console.log('Image sent successfully, ID:', responseData.idMessage);
             } else {
-                console.error('Image was not delivered');
+                console.error('Failed to send image:', responseData);
             }
-        } else {
-            console.error('Failed to send image:', responseData);
+        } catch (error) {
+            console.error('Error parsing image response:', error);
+            console.error('Raw response:', responseText);
         }
 
     } catch (error) {
