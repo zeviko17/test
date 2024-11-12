@@ -77,12 +77,16 @@ document.getElementById('sendButton').addEventListener('click', async function (
                 continue;
             }
 
+            // המתנה של 10 שניות לפני שליחת התמונה
+            await new Promise(resolve => setTimeout(resolve, 10000));
+
             // שליחת תמונה
             const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
             const imageData = {
                 chatId: groupId,
                 caption: 'תמונה נחמדה של כלב',
-                urlFile: imageUrl
+                urlFile: imageUrl,
+                fileName: 'dog.jpg'
             };
 
             console.log('Sending image with data:', imageData);
