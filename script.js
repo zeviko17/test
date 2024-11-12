@@ -18,8 +18,23 @@ document.getElementById('sendButton').addEventListener('click', async function (
             throw new Error(`HTTP error! status: ${sheetResponse.status}`);
         }
         const text = await sheetResponse.text();
-        const json = JSON.parse(text.substr(47).slice(0, -2));
-        const groupId = json.table.rows.find(row => row.c && row.c[3] && row.c[3].v).c[3].v;
+        const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
+
+        const rows = json.table.rows;
+        const groupIdCell = rows[0].c[3];
+        let groupId = null;
+
+        if (groupIdCell) {
+            if (groupIdCell.v !== null && groupIdCell.v !== undefined) {
+                groupId = groupIdCell.v;
+            } else if (groupIdCell.f !== null && groupIdCell.f !== undefined) {
+                groupId = groupIdCell.f;
+            }
+        }
+
+        if (!groupId) {
+            throw new Error('No valid group ID found in cell D2');
+        }
 
         // הצגת ערך התא D2 בלוג
         console.log('Value of cell D2:', groupId);
