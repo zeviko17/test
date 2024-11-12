@@ -7,7 +7,6 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
     // כתובות ה-API
     const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
-    const apiStatusUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance}`;
     const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
 
     // שליפת groupIdים מגוגל שיטס (גיליון פתוח לקריאה)
@@ -78,9 +77,6 @@ document.getElementById('sendButton').addEventListener('click', async function (
                 continue;
             }
 
-            // המתנה של 10 שניות בין ההודעות
-            await new Promise(resolve => setTimeout(resolve, 10000));
-
             // שליחת תמונה
             const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
             const imageData = {
@@ -121,7 +117,7 @@ document.getElementById('sendButton').addEventListener('click', async function (
                 console.error('Raw response:', responseText);
             }
 
-            // המתנה של 10 שניות לפני הודעות הבאות
+            // המתנה של 10 שניות לפני ההודעה הבאה
             await new Promise(resolve => setTimeout(resolve, 10000));
         }
 
