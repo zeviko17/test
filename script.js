@@ -8,7 +8,7 @@ document.getElementById('sendButton').addEventListener('click', async function (
     // כתובת הבסיס של ה-API
     const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
     const apiStatusUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/getMessage/${apiTokenInstance}`;
-    const apiSendFileUrl = `https://7103.media.greenapi.com/waInstance${idInstance}/sendFileByUpload/${apiTokenInstance}`;
+    const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
 
     // שליפת groupId מגוגל שיטס (גיליון פתוח לקריאה)
     const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
@@ -85,15 +85,20 @@ document.getElementById('sendButton').addEventListener('click', async function (
 
         // שליחת תמונה באמצעות API המתאים
         const imageUrl = 'https://cdn.britannica.com/16/234216-050-C66F8665/beagle-hound-dog.jpg';
-        const imagePayload = new FormData();
-        imagePayload.append('chatId', groupId);
-        imagePayload.append('file', imageUrl);
-        imagePayload.append('caption', 'תמונה נחמדה של כלב');
+        const imageData = {
+            chatId: groupId,
+            urlFile: imageUrl,
+            fileName: "image.jpg",
+            caption: 'תמונה נחמדה של כלב'
+        };
 
         console.log('Sending image to:', groupId);
         response = await fetch(apiSendFileUrl, {
             method: 'POST',
-            body: imagePayload
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(imageData)
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
