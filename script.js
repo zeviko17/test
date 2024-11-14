@@ -1,14 +1,14 @@
 let isProcessing = false;
 let shouldStop = false;
 
-// הגדרת נתוני API
-const idInstance = '7103962196';
-const apiTokenInstance = '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae';
+// הגדרת נתוני API באמצעות Secrets
+const idInstance = process.env.ID_INSTANCE;
+const apiTokenInstance = process.env.API_TOKEN_INSTANCE;
 const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
 const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
 
-// הגדרת גיליון
-const sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
+// הגדרת גיליון באמצעות Secrets
+const sheetId = process.env.SHEET_ID;
 const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
 
 // מערך לשמירת הקבוצות
