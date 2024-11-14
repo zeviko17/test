@@ -3,7 +3,7 @@ name: Build and Deploy GitHub Pages
 on:
   push:
     branches:
-      - main  # הפעולה תתבצע כאשר יש שינוי ב-branch הראשי שלך, בדרך כלל נקרא main
+      - main
 
 jobs:
   build:
@@ -14,17 +14,17 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: npm install  # כאן תוכל לשנות את הפקודה לפי הפרויקט שלך
+        run: npm install  # עדכן את הפקודה לפי הפרויקט שלך, אם צריך
 
       - name: Build project
         env:  # כאן אנחנו מגדירים את הסודות שנמשכים מ-GitHub Secrets
           IDINSTANCE: ${{ secrets.IDINSTANCE }}
           APITOKENINSTANCE: ${{ secrets.APITOKENINSTANCE }}
           SHEETID: ${{ secrets.SHEETID }}
-        run: npm run build  # שנה את הפקודה לפי איך שהפרויקט שלך נבנה
+        run: npm run build  # עדכן את הפקודה לפי איך שהפרויקט שלך נבנה
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist  # נתיב לקבצים הסטטיים שלך
+          publish_dir: ./dist  # החלף את הנתיב למיקום הקבצים הסטטיים שלך
