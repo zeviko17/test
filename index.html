@@ -232,7 +232,26 @@
                 flex-direction: column;
             }
         }
-    </style>
+    .language-filter {
+    margin-bottom: 1rem;
+}
+
+.language-filter select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: white;
+}
+
+.language-filter select:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+}
+
+
 </head>
 <body>
     <div class="container">
@@ -253,7 +272,15 @@
 
         <div class="groups-section">
             <h2>בחירת קבוצות</h2>
-            <input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
+            
+<div class="input-group language-filter">
+    <label for="languageFilter">סינון לפי שפה:</label>
+    <select id="languageFilter" class="search-box">
+        <option value="all">הכל</option>
+        <option value="hebrew">עברית</option>
+        <option value="arabic">ערבית</option>
+    </select>
+</div>
             <div class="select-buttons">
                 <button onclick="selectAll()" class="secondary">בחר הכל</button>
                 <button onclick="clearAll()" class="secondary">נקה הכל</button>
