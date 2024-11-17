@@ -43,7 +43,8 @@ async function loadGroups() {
     }
 }
 
-
+// הגדרת מאזיני אירועים
+function setupEventListeners() {
     // כפתור סינון עברית
     document.getElementById('filterHebrewButton').addEventListener('click', filterHebrewGroups);
     // חיפוש קבוצות
@@ -65,6 +66,16 @@ function filterGroups(searchTerm) {
     groupElements.forEach(element => {
         const groupName = element.querySelector('label').textContent.toLowerCase();
         element.style.display = groupName.includes(searchTerm) ? '' : 'none';
+    });
+}
+
+// סינון קבוצות לפי תגית #
+function filterHebrewGroups() {
+    const groupElements = document.querySelectorAll('.group-item');
+    groupElements.forEach(element => {
+        const groupName = element.querySelector('label').textContent;
+        const isHebrewGroup = !groupName.includes('#');
+        element.style.display = isHebrewGroup ? '' : 'none';
     });
 }
 
@@ -99,17 +110,13 @@ function selectAll() {
 }
 
 // ניקוי כל הבחירות המוצגות
-
-
-// סינון קבוצות לפי תגית #
-function filterHebrewGroups() {
-    const groupElements = document.querySelectorAll('.group-item');
-    groupElements.forEach(element => {
-        const groupName = element.querySelector('label').textContent;
-        const isHebrewGroup = groupName.includes('#');
-        element.style.display = isHebrewGroup ? '' : 'none';
+function clearAll() {
+    const visibleGroups = document.querySelectorAll('.group-item:not([style*="display: none"]) input[type="checkbox"]');
+    visibleGroups.forEach(checkbox => {
+        checkbox.checked = false;
+        const index = parseInt(checkbox.id.replace('group', ''));
+        groups[index].checked = false;
     });
-});
 }
 
 // התחלת תהליך השליחה
