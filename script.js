@@ -71,18 +71,13 @@ function filterGroups(searchTerm) {
 }
 
 // סינון קבוצות לפי תגית #
-// עדכון פונקציית הסינון
 function filterHebrewGroups() {
-    console.log('מפעיל סינון קבוצות עברית');
-    const groupsList = document.getElementById('groupsList');
-    const groupElements = groupsList.getElementsByClassName('group-item');
-    
-    groups.forEach((group, index) => {
-        if (index < groupElements.length) {
-            const element = groupElements[index];
-            const isHebrewGroup = group.tag === undefined || group.tag === '' || !group.tag.includes('#');
-            element.style.display = isHebrewGroup ? '' : 'none';
-        }
+    console.log('לחצת על כפתור עברית'); // לוג לבדיקה
+    const groupElements = document.querySelectorAll('.group-item');
+    groupElements.forEach((element, index) => {
+        const groupTag = groups[index].tag;
+        const isHebrewGroup = !groupTag.includes('#');
+        element.style.display = isHebrewGroup ? '' : 'none';
     });
 }
 
@@ -94,6 +89,7 @@ function renderGroups() {
     groups.forEach((group, index) => {
         const div = document.createElement('div');
         div.className = 'group-item';
+        div.setAttribute('data-index', index); // הוסף את המאפיין data-index
         div.innerHTML = 
             `<input type="checkbox" id="group${index}" ${group.checked ? 'checked' : ''}>
             <label for="group${index}">${group.name}</label>`;
