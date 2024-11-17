@@ -204,6 +204,76 @@
             display: none;
         }
 
+        /* Login Screen Styles */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 1.5rem;
+            color: #212529;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+        }
+
+        .login-button {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .login-button:hover {
+            background-color: #0b5ed7;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        #mainContent {
+            display: none;
+        }
+
         /* Responsive Design */
         @media (max-width: 576px) {
             body {
@@ -232,58 +302,21 @@
                 flex-direction: column;
             }
         }
-
-        /* Additional Styling for Login Screen */
-        #loginScreen {
-            max-width: 400px;
-            margin: 2rem auto;
-            text-align: center;
-        }
-
-        #loginScreen input {
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            text-align: center;
-        }
-
-        #loginScreen button {
-            margin-top: 1rem;
-            width: 200px;
-        }
-
-        .logout-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 8px 16px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .logout-button:hover {
-            background-color: #e9ecef;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- מסך כניסה -->
-        <div id="loginScreen" class="card">
-        <h2>כניסה למערכת</h2>
-        <div class="input-group">
-            <label for="accessCode">הזן קוד גישה:</label>
-            <input type="password" id="accessCode" class="search-box" placeholder="הקלד את קוד הגישה...">
-        </div>
-        <button onclick="checkAccessCode()" class="primary">כניסה</button>
-        <div id="loginError" style="color: #dc3545; margin-top: 10px; display: none;">
-            קוד גישה שגוי
+    <!-- מסך הכניסה -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <h2>כניסה למערכת</h2>
+            <input type="password" id="passwordInput" class="login-input" placeholder="הכנס סיסמא">
+            <button onclick="checkPassword()" class="login-button">כניסה</button>
+            <div id="loginError" class="error-message"></div>
         </div>
     </div>
 
-            <!-- תוכן ראשי -->
-        <div id="mainContent" style="display: none;">
+    <!-- התוכן הראשי -->
+    <div id="mainContent" class="container">
         <h1>שליחת הודעות ווצאפ לקבוצות</h1>
 
         <div class="card">
@@ -319,52 +352,24 @@
             </div>
             <div id="progressText" class="progress-text"></div>
         </div>
-        </div>
-    <script>
-window.ENV_idInstance = process.env.NEXT_PUBLIC_idInstance;
-window.ENV_apiTokenInstance = process.env.NEXT_PUBLIC_apiTokenInstance;
-window.ENV_sheetId = process.env.NEXT_PUBLIC_sheetId;
-window.ENV_accessCode = process.env.NEXT_PUBLIC_accessCode;
+    </div>
 
-    // בדיקה אם המשתמש כבר מחובר
-    document.addEventListener('DOMContentLoaded', () => {
-        const isLoggedIn = localStorage.getItem('whatsappSenderLoggedIn');
-        if (isLoggedIn === 'true') {
-            showMainContent();
-        }
-    });
+<script>
+window.ENV_idInstance = '7103962196';
+window.ENV_apiTokenInstance = '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae';
+window.ENV_sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
+window.ENV_password = 'YOUR_PASSWORD_HERE'; // תחליף את זה בסיסמא האמיתית בהגדרות Vercel
 
-    // פונקציה לבדיקת קוד הגישה
-    async function checkAccessCode() {
-        const accessCode = document.getElementById('accessCode').value;
-        const expectedCode = window.ENV_accessCode;
-        
-        if (accessCode === expectedCode) {
-            // שמירת מצב התחברות
-            localStorage.setItem('whatsappSenderLoggedIn', 'true');
-            showMainContent();
-        } else {
-            document.getElementById('loginError').style.display = 'block';
-            // מחיקת הקוד השגוי
-            document.getElementById('accessCode').value = '';
-        }
-    }
-
-    // הצגת המסך הראשי
-    function showMainContent() {
+function checkPassword() {
+    const password = document.getElementById('passwordInput').value;
+    if (password === window.ENV_password) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
+    } else {
+        document.getElementById('loginError').innerText = 'סיסמא שגויה, נסה שוב';
     }
-
-    // פונקציה להתנתקות (אופציונלי)
-    function logout() {
-        localStorage.removeItem('whatsappSenderLoggedIn');
-        document.getElementById('mainContent').style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'block';
-        document.getElementById('accessCode').value = '';
-        document.getElementById('loginError').style.display = 'none';
-    }
-    </script>
+}
+</script>
     <script src="script.js"></script>
 </body>
 </html>
