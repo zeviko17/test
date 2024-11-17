@@ -273,9 +273,26 @@
         </div>
     </div>
 <script>
-window.ENV_idInstance = '7103962196';
-window.ENV_apiTokenInstance = '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae';
-window.ENV_sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
+// קודם נוסיף לוג שיעזור לנו להבין מה קורה
+console.log('Reading environment variables:', {
+    fromVercel: {
+        idInstance: process.env?.NEXT_PUBLIC_idInstance,
+        apiTokenInstance: process.env?.NEXT_PUBLIC_apiTokenInstance,
+        sheetId: process.env?.NEXT_PUBLIC_sheetId
+    }
+});
+
+// הגדרת המשתנים הגלובליים
+window.ENV_idInstance = process.env.NEXT_PUBLIC_idInstance;
+window.ENV_apiTokenInstance = process.env.NEXT_PUBLIC_apiTokenInstance;
+window.ENV_sheetId = process.env.NEXT_PUBLIC_sheetId;
+
+// לוג נוסף לבדיקה אם המשתנים נשמרו נכון
+console.log('Window environment variables set:', {
+    idInstance: window.ENV_idInstance,
+    apiTokenInstance: window.ENV_apiTokenInstance,
+    sheetId: window.ENV_sheetId
+});
 </script>
     <script src="script.js"></script>
 </body>
