@@ -33,6 +33,7 @@ async function loadGroups() {
         groups = json.table.rows.slice(1).map(row => ({
             name: row.c[1]?.v || '',  // עמודה B
             id: row.c[3]?.v || '',    // עמודה D
+            tag: row.c[0]?.v || '',   // עמודה A
             checked: false
         })).filter(group => group.name && group.id);
 
@@ -73,9 +74,9 @@ function filterGroups(searchTerm) {
 function filterHebrewGroups() {
     console.log('לחצת על כפתור עברית'); // לוג לבדיקה
     const groupElements = document.querySelectorAll('.group-item');
-    groupElements.forEach(element => {
-        const groupName = element.querySelector('label').textContent;
-        const isHebrewGroup = !groupName.includes('#');
+    groupElements.forEach((element, index) => {
+        const groupTag = groups[index].tag;
+        const isHebrewGroup = !groupTag.includes('#');
         element.style.display = isHebrewGroup ? '' : 'none';
     });
 }
