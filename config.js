@@ -1,16 +1,12 @@
-// הגדרת המשתנים מ-Vercel
-window.ENV_idInstance = '%NEXT_PUBLIC_idInstance%';
-window.ENV_apiTokenInstance = '%NEXT_PUBLIC_apiTokenInstance%';
-window.ENV_sheetId = '%NEXT_PUBLIC_sheetId%';
+// Define environment-specific configuration at build time
+// These values will be replaced by Vercel during build
+const ENV = {
+    idInstance: '__VERCEL_INSTANCE_ID__',
+    apiTokenInstance: '__VERCEL_API_TOKEN__',
+    sheetId: '__VERCEL_SHEET_ID__'
+};
 
-// לוג לבדיקה שהערכים נקראו נכון
-console.log('Environment loaded from Vercel:', {
-    idInstance: window.ENV_idInstance,
-    apiTokenInstance: window.ENV_apiTokenInstance,
-    sheetId: window.ENV_sheetId
-});
-
-// בדיקת שגיאה אם יש בעיה בטעינה
-if (window.ENV_idInstance.includes('%NEXT_PUBLIC')) {
-    console.error('Failed to load environment variables from Vercel');
-}
+// Expose to window for use in other scripts
+window.ENV_idInstance = ENV.idInstance;
+window.ENV_apiTokenInstance = ENV.apiTokenInstance;
+window.ENV_sheetId = ENV.sheetId;
