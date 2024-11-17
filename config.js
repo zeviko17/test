@@ -1,8 +1,9 @@
 const config = {
-    idInstance: process.env.NEXT_PUBLIC_idInstance || '7103962196',
-    apiTokenInstance: process.env.NEXT_PUBLIC_apiTokenInstance || '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae',
-    sheetId: process.env.NEXT_PUBLIC_sheetId || '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss'
+    idInstance: process.env.NEXT_PUBLIC_idInstance,
+    apiTokenInstance: process.env.NEXT_PUBLIC_apiTokenInstance,
+    sheetId: process.env.NEXT_PUBLIC_sheetId
 };
 
-// ייצוא הקונפיגורציה
-export default config;
+window.ENV_idInstance = config.idInstance;
+window.ENV_apiTokenInstance = config.apiTokenInstance;
+window.ENV_sheetId = config.sheetId;
