@@ -1,49 +1,31 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // בדיקת התחברות
-    if (sessionStorage.getItem('isLoggedIn')) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        // טעינת הקבוצות והגדרת מאזינים רק אם המשתמש מחובר
-        await loadGroups();
-        setupEventListeners();
-    }
-});
-
-function checkAccess() {
-    const inputCode = document.getElementById('accessCode').value;
-    if (inputCode === window.ENV_accessCode) {
-        sessionStorage.setItem('isLoggedIn', 'true');
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-        loadGroups();
-        setupEventListeners();
-    } else {
-        alert('קוד גישה שגוי');
-    }
-}
-
 let isProcessing = false;
 let shouldStop = false;
 
 // הגדרת נתוני API
 const idInstance = window.ENV_idInstance;
 const apiTokenInstance = window.ENV_apiTokenInstance;
-const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
-const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
+const apiBaseUrl = https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance};
+const apiSendFileUrl = https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance};
 
 // הגדרת גיליון
 const sheetId = window.ENV_sheetId;
-const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
+const googleSheetsUrl = https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות;
 
 // מערך לשמירת הקבוצות
 let groups = [];
+
+// אתחול הדף
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadGroups();
+    setupEventListeners();
+});
 
 // טעינת קבוצות מהגיליון
 async function loadGroups() {
     try {
         const response = await fetch(googleSheetsUrl);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(HTTP error! status: ${response.status});
         }
         const text = await response.text();
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
@@ -60,6 +42,7 @@ async function loadGroups() {
         alert('שגיאה בטעינת הקבוצות');
     }
 }
+
 // הגדרת מאזיני אירועים
 function setupEventListeners() {
     // חיפוש קבוצות
@@ -92,10 +75,10 @@ function renderGroups() {
     groups.forEach((group, index) => {
         const div = document.createElement('div');
         div.className = 'group-item';
-        div.innerHTML = `
+        div.innerHTML = 
             <input type="checkbox" id="group${index}" ${group.checked ? 'checked' : ''}>
             <label for="group${index}">${group.name}</label>
-        `;
+        ;
         
         div.querySelector('input').addEventListener('change', (e) => {
             groups[index].checked = e.target.checked;
@@ -169,7 +152,7 @@ async function startSending() {
             sent++;
             updateProgress(sent, selectedGroups.length);
         } catch (error) {
-            console.error(`Error sending to ${group.name}:`, error);
+            console.error(Error sending to ${group.name}:, error);
         }
 
         if (sent < selectedGroups.length && !shouldStop) {
@@ -203,8 +186,8 @@ function updateUIForSending(isSending) {
 // עדכון מד ההתקדמות
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
-    document.getElementById('progressFill').style.width = `${percentage}%`;
-    document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
+    document.getElementById('progressFill').style.width = ${percentage}%;
+    document.getElementById('progressText').textContent = נשלחו ${current} מתוך ${total} הודעות;
 }
 
 // עצירת תהליך השליחה
@@ -228,7 +211,7 @@ async function sendTextMessage(chatId, message) {
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(HTTP error! status: ${response.status});
     }
 
     return response.json();
@@ -250,7 +233,7 @@ async function sendImageMessage(chatId, message, imageUrl) {
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(HTTP error! status: ${response.status});
     }
 
     return response.json();
