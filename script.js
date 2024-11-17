@@ -48,6 +48,8 @@ async function loadGroups() {
 function setupEventListeners() {
     // כפתור סינון עברית
     document.getElementById('filterHebrewButton').addEventListener('click', filterHebrewGroups);
+    // כפתור סינון ערבית
+    document.getElementById('filterArabicButton').addEventListener('click', filterArabicGroups);
     // חיפוש קבוצות
     document.getElementById('searchGroups').addEventListener('input', (e) => {
         const searchTerm = e.target.value.trim().toLowerCase();
@@ -87,6 +89,27 @@ function filterHebrewGroups() {
             
             const isHebrewGroup = !group.tag || !group.tag.includes('#');
             element.style.display = isHebrewGroup ? '' : 'none';
+        }
+    });
+}
+
+// סינון קבוצות לפי תגית # - ערבית
+function filterArabicGroups() {
+    console.log('מפעיל סינון קבוצות ערבית');
+    const groupElements = document.querySelectorAll('.group-item');
+    
+    groupElements.forEach(element => {
+        const index = parseInt(element.getAttribute('data-index'));
+        if (!isNaN(index) && index < groups.length) {
+            const group = groups[index];
+            console.log(`Checking group ${index}:`, { 
+                name: group.name, 
+                tag: group.tag,
+                isArabic: group.tag?.includes('#')
+            });
+            
+            const isArabicGroup = group.tag && group.tag.includes('#');
+            element.style.display = isArabicGroup ? '' : 'none';
         }
     });
 }
