@@ -4,12 +4,12 @@ let shouldStop = false;
 // הגדרת נתוני API
 const idInstance = window.ENV_idInstance;
 const apiTokenInstance = window.ENV_apiTokenInstance;
-const apiBaseUrl = https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance};
-const apiSendFileUrl = https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance};
+const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
+const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
 
 // הגדרת גיליון
 const sheetId = window.ENV_sheetId;
-const googleSheetsUrl = https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות;
+const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
 
 // מערך לשמירת הקבוצות
 let groups = [];
@@ -25,12 +25,12 @@ async function loadGroups() {
     try {
         const response = await fetch(googleSheetsUrl);
         if (!response.ok) {
-            throw new Error(HTTP error! status: ${response.status});
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         const text = await response.text();
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
         
-        groups = json.table.rows.slice(1).map(row => ({
+        groups = json.table.rows.map(row => ({
             name: row.c[1]?.v || '',  // עמודה B
             id: row.c[3]?.v || '',    // עמודה D
             checked: false
@@ -76,9 +76,8 @@ function renderGroups() {
         const div = document.createElement('div');
         div.className = 'group-item';
         div.innerHTML = 
-            <input type="checkbox" id="group${index}" ${group.checked ? 'checked' : ''}>
-            <label for="group${index}">${group.name}</label>
-        ;
+            `<input type="checkbox" id="group${index}" ${group.checked ? 'checked' : ''}>
+            <label for="group${index}">${group.name}</label>`;
         
         div.querySelector('input').addEventListener('change', (e) => {
             groups[index].checked = e.target.checked;
@@ -125,7 +124,7 @@ async function startSending() {
     }
 
     if (isProcessing) {
-        alert('תהליך שליחה כבר פועל');
+        alert('תהליך שליחה כבר פעל');
         return;
     }
 
@@ -152,7 +151,7 @@ async function startSending() {
             sent++;
             updateProgress(sent, selectedGroups.length);
         } catch (error) {
-            console.error(Error sending to ${group.name}:, error);
+            console.error(`Error sending to ${group.name}:`, error);
         }
 
         if (sent < selectedGroups.length && !shouldStop) {
@@ -186,8 +185,8 @@ function updateUIForSending(isSending) {
 // עדכון מד ההתקדמות
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
-    document.getElementById('progressFill').style.width = ${percentage}%;
-    document.getElementById('progressText').textContent = נשלחו ${current} מתוך ${total} הודעות;
+    document.getElementById('progressFill').style.width = `${percentage}%`;
+    document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
 }
 
 // עצירת תהליך השליחה
@@ -211,7 +210,8 @@ async function sendTextMessage(chatId, message) {
     });
 
     if (!response.ok) {
-        throw new Error(HTTP error! status: ${response.status});
+        const errorDetails = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
     }
 
     return response.json();
@@ -233,7 +233,8 @@ async function sendImageMessage(chatId, message, imageUrl) {
     });
 
     if (!response.ok) {
-        throw new Error(HTTP error! status: ${response.status});
+        const errorDetails = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
     }
 
     return response.json();
