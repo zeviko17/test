@@ -2,13 +2,13 @@ let isProcessing = false;
 let shouldStop = false;
 
 // הגדרת נתוני API
-const idInstance = window.ENV_idInstance;
-const apiTokenInstance = window.ENV_apiTokenInstance;
+const idInstance = window.config.idInstance;
+const apiTokenInstance = window.config.apiTokenInstance;
 const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
 const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
 
 // הגדרת גיליון
-const sheetId = window.ENV_sheetId;
+const sheetId = window.config.sheetId;
 const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
 
 // מערך לשמירת הקבוצות
@@ -31,10 +31,8 @@ async function loadGroups() {
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
         
         groups = json.table.rows.slice(1).map(row => ({
-            code: row.c[0]?.v || '',    // עמודה A - קוד כולל סימון
-            name: row.c[1]?.v || '',    // עמודה B
-            id: row.c[3]?.v || '',      // עמודה D
-            isArabic: (row.c[0]?.v || '').includes('#'), // האם מסומן כערבית
+            name: row.c[1]?.v || '',  // עמודה B
+            id: row.c[3]?.v || '',    // עמודה D
             checked: false
         })).filter(group => group.name && group.id);
 
@@ -49,15 +47,8 @@ async function loadGroups() {
 function setupEventListeners() {
     // חיפוש קבוצות
     document.getElementById('searchGroups').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.trim();
-        const currentLanguage = document.getElementById('languageFilter').value;
-        filterGroups(searchTerm, currentLanguage);
-    });
-
-    // סינון שפה
-    document.getElementById('languageFilter').addEventListener('change', (e) => {
-        const searchTerm = document.getElementById('searchGroups').value.trim();
-        filterGroups(searchTerm, e.target.value);
+        const searchTerm = e.target.value.trim().toLowerCase();
+        filterGroups(searchTerm);
     });
 
     // כפתור שליחה
@@ -67,17 +58,12 @@ function setupEventListeners() {
     document.getElementById('stopButton').addEventListener('click', stopSending);
 }
 
-// סינון קבוצות לפי טקסט ולפי שפה
-function filterGroups(searchTerm = '', languageFilter = 'all') {
+// סינון קבוצות לפי טקסט חיפוש
+function filterGroups(searchTerm) {
     const groupElements = document.querySelectorAll('.group-item');
-    groupElements.forEach((element, index) => {
+    groupElements.forEach(element => {
         const groupName = element.querySelector('label').textContent.toLowerCase();
-        const matchesSearch = groupName.includes(searchTerm.toLowerCase());
-        const matchesLanguage = languageFilter === 'all' || 
-            (languageFilter === 'arabic' && groups[index].isArabic) ||
-            (languageFilter === 'hebrew' && !groups[index].isArabic);
-        
-        element.style.display = matchesSearch && matchesLanguage ? '' : 'none';
+        element.style.display = groupName.includes(searchTerm) ? '' : 'none';
     });
 }
 
@@ -196,7 +182,7 @@ function updateUIForSending(isSending) {
     document.getElementById('searchGroups').disabled = isSending;
 }
 
-// עדכון מד התקדמות
+// עדכון מד ההתקדמות
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
