@@ -204,76 +204,6 @@
             display: none;
         }
 
-        /* Login Screen Styles */
-        #loginScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #f8f9fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .login-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            padding: 2rem;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .login-card h2 {
-            margin-bottom: 1.5rem;
-            color: #212529;
-        }
-
-        .login-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            font-size: 1rem;
-            text-align: center;
-        }
-
-        .login-input:focus {
-            outline: none;
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
-        }
-
-        .login-button {
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .login-button:hover {
-            background-color: #0b5ed7;
-        }
-
-        .error-message {
-            color: #dc3545;
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        #mainContent {
-            display: none;
-        }
-
         /* Responsive Design */
         @media (max-width: 576px) {
             body {
@@ -305,18 +235,7 @@
     </style>
 </head>
 <body>
-    <!-- מסך הכניסה -->
-    <div id="loginScreen">
-        <div class="login-card">
-            <h2>כניסה למערכת</h2>
-            <input type="password" id="passwordInput" class="login-input" placeholder="הכנס סיסמא">
-            <button onclick="checkPassword()" class="login-button">כניסה</button>
-            <div id="loginError" class="error-message"></div>
-        </div>
-    </div>
-
-    <!-- התוכן הראשי -->
-    <div id="mainContent" class="container">
+    <div class="container">
         <h1>שליחת הודעות ווצאפ לקבוצות</h1>
 
         <div class="card">
@@ -353,22 +272,10 @@
             <div id="progressText" class="progress-text"></div>
         </div>
     </div>
-
 <script>
-window.ENV_idInstance = '7103962196';
-window.ENV_apiTokenInstance = '64e3bf31b17246f1957f8935b45f7fb5dc5517ee029d41fbae';
-window.ENV_sheetId = '10IkkOpeD_VoDpqMN23QFxGyuW0_p0TZx4NpWNcMN-Ss';
-window.ENV_password = 'YOUR_PASSWORD_HERE'; // תחליף את זה בסיסמא האמיתית בהגדרות Vercel
-
-function checkPassword() {
-    const password = document.getElementById('passwordInput').value;
-    if (password === window.ENV_password) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'block';
-    } else {
-        document.getElementById('loginError').innerText = 'סיסמא שגויה, נסה שוב';
-    }
-}
+window.ENV_idInstance = '{{NEXT_PUBLIC_idInstance}}';
+window.ENV_apiTokenInstance = '{{NEXT_PUBLIC_apiTokenInstance}}';
+window.ENV_sheetId = '{{NEXT_PUBLIC_sheetId}}';
 </script>
     <script src="script.js"></script>
 </body>
