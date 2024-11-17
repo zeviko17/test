@@ -1,241 +1,279 @@
-let isProcessing = false;
-let shouldStop = false;
-
-// הגדרת נתוני API
-const idInstance = window.ENV_idInstance;
-const apiTokenInstance = window.ENV_apiTokenInstance;
-const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
-const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
-
-// הגדרת גיליון
-const sheetId = window.ENV_sheetId;
-const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
-
-// מערך לשמירת הקבוצות
-let groups = [];
-
-// אתחול הדף
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadGroups();
-    setupEventListeners();
-});
-
-// טעינת קבוצות מהגיליון
-async function loadGroups() {
-    try {
-        const response = await fetch(googleSheetsUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const text = await response.text();
-        const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
-        
-        groups = json.table.rows.map(row => ({
-            name: row.c[1]?.v || '',  // עמודה B
-            id: row.c[3]?.v || '',    // עמודה D
-            checked: false
-        })).filter(group => group.name && group.id);
-
-        renderGroups();
-    } catch (error) {
-        console.error('Error loading groups:', error);
-        alert('שגיאה בטעינת הקבוצות');
-    }
-}
-
-// הגדרת מאזיני אירועים
-function setupEventListeners() {
-    // חיפוש קבוצות
-    document.getElementById('searchGroups').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.trim().toLowerCase();
-        filterGroups(searchTerm);
-    });
-
-    // כפתור שליחה
-    document.getElementById('sendButton').addEventListener('click', startSending);
-    
-    // כפתור עצירה
-    document.getElementById('stopButton').addEventListener('click', stopSending);
-}
-
-// סינון קבוצות לפי טקסט חיפוש
-function filterGroups(searchTerm) {
-    const groupElements = document.querySelectorAll('.group-item');
-    groupElements.forEach(element => {
-        const groupName = element.querySelector('label').textContent.toLowerCase();
-        element.style.display = groupName.includes(searchTerm) ? '' : 'none';
-    });
-}
-
-// הצגת הקבוצות בדף
-function renderGroups() {
-    const groupsList = document.getElementById('groupsList');
-    groupsList.innerHTML = '';
-
-    groups.forEach((group, index) => {
-        const div = document.createElement('div');
-        div.className = 'group-item';
-        div.innerHTML = 
-            `<input type="checkbox" id="group${index}" ${group.checked ? 'checked' : ''}>
-            <label for="group${index}">${group.name}</label>`;
-        
-        div.querySelector('input').addEventListener('change', (e) => {
-            groups[index].checked = e.target.checked;
-        });
-
-        groupsList.appendChild(div);
-    });
-}
-
-// בחירת כל הקבוצות המוצגות
-function selectAll() {
-    const visibleGroups = document.querySelectorAll('.group-item:not([style*="display: none"]) input[type="checkbox"]');
-    visibleGroups.forEach(checkbox => {
-        checkbox.checked = true;
-        const index = parseInt(checkbox.id.replace('group', ''));
-        groups[index].checked = true;
-    });
-}
-
-// ניקוי כל הבחירות המוצגות
-function clearAll() {
-    const visibleGroups = document.querySelectorAll('.group-item:not([style*="display: none"]) input[type="checkbox"]');
-    visibleGroups.forEach(checkbox => {
-        checkbox.checked = false;
-        const index = parseInt(checkbox.id.replace('group', ''));
-        groups[index].checked = false;
-    });
-}
-
-// התחלת תהליך השליחה
-async function startSending() {
-    const messageText = document.getElementById('messageText').value.trim();
-    const imageUrl = document.getElementById('imageUrl').value.trim();
-    const selectedGroups = groups.filter(group => group.checked);
-
-    if (!messageText) {
-        alert('יש להזין תוכן הודעה');
-        return;
-    }
-
-    if (selectedGroups.length === 0) {
-        alert('יש לבחור לפחות קבוצה אחת');
-        return;
-    }
-
-    if (isProcessing) {
-        alert('תהליך שליחה כבר פעל');
-        return;
-    }
-
-    // הפעלת מצב שליחה
-    isProcessing = true;
-    shouldStop = false;
-    updateUIForSending(true);
-
-    let sent = 0;
-    for (const group of selectedGroups) {
-        if (shouldStop) {
-            break;
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שליחת הודעות ווצאפ לקבוצות</title>
+    <style>
+        /* General Layout */
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
         }
 
-        try {
-            // שליחת ההודעה
-            if (imageUrl) {
-                // שליחת תמונה עם טקסט
-                await sendImageMessage(group.id, messageText, imageUrl);
-            } else {
-                // שליחת טקסט בלבד
-                await sendTextMessage(group.id, messageText);
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 15px;
+        }
+
+        /* Card Styling */
+        .card {
+            background: white;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Message Input Area */
+        .message-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+        }
+
+        /* Groups Section */
+        .groups-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+        }
+
+        .groups-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: white;
+        }
+
+        .group-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .group-item input[type="checkbox"] {
+            margin-left: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .group-item label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+            padding-right: 10px;
+        }
+
+        /* Buttons */
+        .select-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        button.primary {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+        }
+
+        button.primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        button.secondary {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #212529;
+        }
+
+        button.secondary:hover {
+            background-color: #e9ecef;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #0d6efd;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        #stopButton {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        #stopButton:hover {
+            background-color: #bb2d3b;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
             }
-            sent++;
-            updateProgress(sent, selectedGroups.length);
-        } catch (error) {
-            console.error(`Error sending to ${group.name}:`, error);
+
+            .container {
+                padding: 0 10px;
+                margin-top: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .groups-list {
+                max-height: 300px;
+            }
+
+            button {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .select-buttons {
+                flex-direction: column;
+            }
         }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>שליחת הודעות ווצאפ לקבוצות</h1>
 
-        if (sent < selectedGroups.length && !shouldStop) {
-            await new Promise(resolve => setTimeout(resolve, 10000)); // המתנה של 10 שניות
-        }
-    }
+        <div class="card">
+            <div class="message-area">
+                <div class="input-group">
+                    <label for="messageText">תוכן ההודעה:</label>
+                    <textarea id="messageText" placeholder="הקלד את תוכן ההודעה כאן..." required></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="imageUrl">קישור לתמונה (אופציונלי):</label>
+                    <input type="text" id="imageUrl" placeholder="הכנס קישור לתמונה">
+                </div>
+            </div>
+        </div>
 
-    // סיום תהליך השליחה
-    isProcessing = false;
-    updateUIForSending(false);
-    
-    if (shouldStop) {
-        alert('תהליך השליחה הופסק');
-    } else {
-        alert('תהליך השליחה הושלם');
-    }
-}
+        <div class="groups-section">
+            <h2>בחירת קבוצות</h2>
+            <input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
+            <div class="select-buttons">
+                <button onclick="selectAll()" class="secondary">בחר הכל</button>
+                <button onclick="clearAll()" class="secondary">נקה הכל</button>
+            </div>
+            <div id="groupsList" class="groups-list">
+                <!-- הקבוצות יתווספו כאן דינמית -->
+            </div>
+        </div>
 
-// עדכון ממשק המשתמש בזמן שליחה
-function updateUIForSending(isSending) {
-    document.getElementById('sendButton').style.display = isSending ? 'none' : 'block';
-    document.getElementById('stopButton').style.display = isSending ? 'block' : 'none';
-    document.getElementById('progressBar').style.display = isSending ? 'block' : 'none';
-    document.getElementById('progressText').style.display = isSending ? 'block' : 'none';
-    
-    document.getElementById('messageText').disabled = isSending;
-    document.getElementById('imageUrl').disabled = isSending;
-    document.getElementById('searchGroups').disabled = isSending;
-}
-
-// עדכון מד ההתקדמות
-function updateProgress(current, total) {
-    const percentage = (current / total) * 100;
-    document.getElementById('progressFill').style.width = `${percentage}%`;
-    document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
-}
-
-// עצירת תהליך השליחה
-function stopSending() {
-    if (isProcessing) {
-        shouldStop = true;
-    }
-}
-
-// שליחת הודעת טקסט
-async function sendTextMessage(chatId, message) {
-    const response = await fetch(apiBaseUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            chatId: chatId,
-            message: message
-        })
-    });
-
-    if (!response.ok) {
-        const errorDetails = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
-    }
-
-    return response.json();
-}
-
-// שליחת הודעה עם תמונה
-async function sendImageMessage(chatId, message, imageUrl) {
-    const response = await fetch(apiSendFileUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            chatId: chatId,
-            caption: message,
-            urlFile: imageUrl,
-            fileName: 'image.jpg'
-        })
-    });
-
-    if (!response.ok) {
-        const errorDetails = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
-    }
-
-    return response.json();
-}
+        <div class="send-section">
+            <button id="sendButton" class="primary">שלח לקבוצות שנבחרו</button>
+            <button id="stopButton" class="hidden">עצור שליחה</button>
+            <div id="progressBar" class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="progressText" class="progress-text"></div>
+        </div>
+    </div>
+</script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
