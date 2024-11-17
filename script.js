@@ -9,7 +9,6 @@ const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/se
 
 // הגדרת גיליון
 const sheetId = window.ENV_sheetId;
-console.log('Sheet ID:', sheetId); // הוסף את זה
 const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
 
 // מערך לשמירת הקבוצות
@@ -23,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // טעינת קבוצות מהגיליון
 async function loadGroups() {
-    console.log('Google Sheets URL:', googleSheetsUrl); // הוסף את זה
     try {
         const response = await fetch(googleSheetsUrl);
         if (!response.ok) {
@@ -127,7 +125,7 @@ async function startSending() {
     }
 
     if (isProcessing) {
-        alert('תהליך שליחה כבר פעל');
+        alert('תהליך שליחה כבר פועל');
         return;
     }
 
