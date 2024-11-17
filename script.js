@@ -30,7 +30,7 @@ async function loadGroups() {
         const text = await response.text();
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
         
-        groups = json.table.rows.map(row => ({
+        groups = json.table.rows.slice(1).map(row => ({
             name: row.c[1]?.v || '',  // עמודה B
             id: row.c[3]?.v || '',    // עמודה D
             checked: false
