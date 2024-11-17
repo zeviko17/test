@@ -2,13 +2,13 @@ let isProcessing = false;
 let shouldStop = false;
 
 // הגדרת נתוני API
-const idInstance = window.config.idInstance;
-const apiTokenInstance = window.config.apiTokenInstance;
+const idInstance = window.ENV_idInstance;
+const apiTokenInstance = window.ENV_apiTokenInstance;
 const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
 const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
 
 // הגדרת גיליון
-const sheetId = window.config.sheetId;
+const sheetId = window.ENV_sheetId;
 const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
 
 // מערך לשמירת הקבוצות
