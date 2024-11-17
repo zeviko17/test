@@ -273,9 +273,9 @@
         </div>
     </div>
 <script>
-window.ENV_idInstance = '{{NEXT_PUBLIC_idInstance}}';
-window.ENV_apiTokenInstance = '{{NEXT_PUBLIC_apiTokenInstance}}';
-window.ENV_sheetId = '{{NEXT_PUBLIC_sheetId}}';
+window.ENV_idInstance = process.env.NEXT_PUBLIC_idInstance;
+window.ENV_apiTokenInstance = process.env.NEXT_PUBLIC_apiTokenInstance;
+window.ENV_sheetId = process.env.NEXT_PUBLIC_sheetId;
 </script>
     <script src="script.js"></script>
 </body>
