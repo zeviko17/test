@@ -72,12 +72,22 @@ function filterGroups(searchTerm) {
 
 // סינון קבוצות לפי תגית #
 function filterHebrewGroups() {
-    console.log('לחצת על כפתור עברית'); // לוג לבדיקה
+    console.log('מפעיל סינון קבוצות עברית');
     const groupElements = document.querySelectorAll('.group-item');
-    groupElements.forEach((element, index) => {
-        const groupTag = groups[index].tag;
-        const isHebrewGroup = !groupTag.includes('#');
-        element.style.display = isHebrewGroup ? '' : 'none';
+    
+    groupElements.forEach(element => {
+        const index = parseInt(element.getAttribute('data-index'));
+        if (!isNaN(index) && index < groups.length) {
+            const group = groups[index];
+            console.log(`Checking group ${index}:`, { 
+                name: group.name, 
+                tag: group.tag,
+                isHebrew: !group.tag.includes('#')
+            });
+            
+            const isHebrewGroup = !group.tag || !group.tag.includes('#');
+            element.style.display = isHebrewGroup ? '' : 'none';
+        }
     });
 }
 
