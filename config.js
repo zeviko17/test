@@ -1,7 +1,7 @@
-// קריאה מהסביבה של Vercel
-window.ENV_idInstance = process.env.NEXT_PUBLIC_idInstance;
-window.ENV_apiTokenInstance = process.env.NEXT_PUBLIC_apiTokenInstance;
-window.ENV_sheetId = process.env.NEXT_PUBLIC_sheetId;
+// הגדרת המשתנים מ-Vercel
+window.ENV_idInstance = '{{ .Env.NEXT_PUBLIC_idInstance }}';
+window.ENV_apiTokenInstance = '{{ .Env.NEXT_PUBLIC_apiTokenInstance }}';
+window.ENV_sheetId = '{{ .Env.NEXT_PUBLIC_sheetId }}';
 
 // לוג לבדיקה שהערכים נקראו נכון
 console.log('Environment loaded from Vercel:', {
@@ -10,7 +10,7 @@ console.log('Environment loaded from Vercel:', {
     sheetId: window.ENV_sheetId
 });
 
-// בדיקת שגיאה אם אין ערכים
-if (!window.ENV_idInstance || !window.ENV_apiTokenInstance || !window.ENV_sheetId) {
-    console.error('Missing environment variables from Vercel');
+// בדיקת שגיאה אם יש בעיה בטעינה
+if (window.ENV_idInstance.includes('{{')) {
+    console.error('Failed to load environment variables from Vercel');
 }
