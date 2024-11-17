@@ -245,11 +245,8 @@
     background-color: white;
 }
 
-.language-filter select:focus {
-    outline: none;
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
-}
+
+</style>
 
 
 </head>
@@ -275,11 +272,8 @@
             
 <div class="input-group language-filter">
     <label for="languageFilter">סינון לפי שפה:</label>
-    <select id="languageFilter" class="search-box">
-        <option value="all">הכל</option>
-        <option value="hebrew">עברית</option>
-        <option value="arabic">ערבית</option>
-    </select>
+    
+<input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
 </div>
             <div class="select-buttons">
                 <button onclick="selectAll()" class="secondary">בחר הכל</button>
