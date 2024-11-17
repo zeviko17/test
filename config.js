@@ -1,7 +1,7 @@
 // הגדרת המשתנים מ-Vercel
-window.ENV_idInstance = '{{ .Env.NEXT_PUBLIC_idInstance }}';
-window.ENV_apiTokenInstance = '{{ .Env.NEXT_PUBLIC_apiTokenInstance }}';
-window.ENV_sheetId = '{{ .Env.NEXT_PUBLIC_sheetId }}';
+window.ENV_idInstance = '%NEXT_PUBLIC_idInstance%';
+window.ENV_apiTokenInstance = '%NEXT_PUBLIC_apiTokenInstance%';
+window.ENV_sheetId = '%NEXT_PUBLIC_sheetId%';
 
 // לוג לבדיקה שהערכים נקראו נכון
 console.log('Environment loaded from Vercel:', {
@@ -11,6 +11,6 @@ console.log('Environment loaded from Vercel:', {
 });
 
 // בדיקת שגיאה אם יש בעיה בטעינה
-if (window.ENV_idInstance.includes('{{')) {
+if (window.ENV_idInstance.includes('%NEXT_PUBLIC')) {
     console.error('Failed to load environment variables from Vercel');
 }
