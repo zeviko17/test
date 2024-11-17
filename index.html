@@ -46,7 +46,7 @@
             color: #212529;
         }
 
-        textarea, input[type="text"], input[type="password"] {
+        textarea, input[type="text"] {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #dee2e6;
@@ -60,13 +60,13 @@
             min-height: 100px;
         }
 
-        textarea:focus, input[type="text"]:focus, input[type="password"]:focus {
+        textarea:focus, input[type="text"]:focus {
             outline: none;
             border-color: #0d6efd;
             box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
         }
-        
-/* Groups Section */
+
+        /* Groups Section */
         .groups-section {
             background: white;
             border-radius: 12px;
@@ -131,6 +131,7 @@
             gap: 10px;
             margin-bottom: 1rem;
         }
+
         button {
             padding: 0.5rem 1rem;
             border-radius: 6px;
@@ -194,31 +195,13 @@
             color: white;
             border: none;
         }
+
         #stopButton:hover {
             background-color: #bb2d3b;
         }
 
         .hidden {
             display: none;
-        }
-
-        /* Login Screen Styles */
-        #loginScreen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        #loginScreen .card {
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-        }
-
-        #loginScreen input[type="password"] {
-            margin-bottom: 1rem;
         }
 
         /* Responsive Design */
@@ -252,18 +235,9 @@
     </style>
 </head>
 <body>
-    <div id="loginScreen" class="container">
-        <div class="card">
-            <h1>כניסה למערכת</h1>
-            <div class="input-group">
-                <label for="accessCode">קוד גישה:</label>
-                <input type="password" id="accessCode" placeholder="הכנס קוד גישה">
-            </div>
-            <button onclick="checkAccess()" class="primary">כניסה</button>
-        </div>
-    </div>
-    <div id="mainApp" class="container" style="display: none;">
+    <div class="container">
         <h1>שליחת הודעות ווצאפ לקבוצות</h1>
+
         <div class="card">
             <div class="message-area">
                 <div class="input-group">
@@ -276,6 +250,7 @@
                 </div>
             </div>
         </div>
+
         <div class="groups-section">
             <h2>בחירת קבוצות</h2>
             <input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
@@ -287,6 +262,7 @@
                 <!-- הקבוצות יתווספו כאן דינמית -->
             </div>
         </div>
+
         <div class="send-section">
             <button id="sendButton" class="primary">שלח לקבוצות שנבחרו</button>
             <button id="stopButton" class="hidden">עצור שליחה</button>
@@ -296,6 +272,7 @@
             <div id="progressText" class="progress-text"></div>
         </div>
     </div>
+</script>
     <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
