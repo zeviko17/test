@@ -1,16 +1,16 @@
-// קריאת משתני הסביבה מ-Vercel בזמן בנייה
-window.ENV_idInstance = '%NEXT_PUBLIC_idInstance%';
-window.ENV_apiTokenInstance = '%NEXT_PUBLIC_apiTokenInstance%';
-window.ENV_sheetId = '%NEXT_PUBLIC_sheetId%';
+// קריאת משתני הסביבה
+const idInstance = process.env.NEXT_PUBLIC_idInstance;
+const apiTokenInstance = process.env.NEXT_PUBLIC_apiTokenInstance;
+const sheetId = process.env.NEXT_PUBLIC_sheetId;
 
 // לוג לבדיקה
 console.log('Environment loaded:', {
-    idInstance: window.ENV_idInstance,
-    apiTokenInstance: window.ENV_apiTokenInstance,
-    sheetId: window.ENV_sheetId
+    idInstance,
+    apiTokenInstance,
+    sheetId
 });
 
 // בדיקת שגיאות
-if (!window.ENV_idInstance || window.ENV_idInstance.includes('%NEXT_PUBLIC')) {
-    console.error('Failed to load environment variables from Vercel');
+if (!sheetId) {
+    console.error('Failed to load sheetId from environment variables');
 }
