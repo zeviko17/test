@@ -31,8 +31,10 @@ async function loadGroups() {
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
         
         groups = json.table.rows.slice(1).map(row => ({
-            name: row.c[1]?.v || '',  // עמודה B
-            id: row.c[3]?.v || '',    // עמודה D
+            code: row.c[0]?.v || '',    // עמודה A - קוד כולל סימון
+            name: row.c[1]?.v || '',    // עמודה B
+            id: row.c[3]?.v || '',      // עמודה D
+            isArabic: (row.c[0]?.v || '').includes('#'), // האם מסומן כערבית
             checked: false
         })).filter(group => group.name && group.id);
 
@@ -47,8 +49,15 @@ async function loadGroups() {
 function setupEventListeners() {
     // חיפוש קבוצות
     document.getElementById('searchGroups').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.trim().toLowerCase();
-        filterGroups(searchTerm);
+        const searchTerm = e.target.value.trim();
+        const currentLanguage = document.getElementById('languageFilter').value;
+        filterGroups(searchTerm, currentLanguage);
+    });
+
+    // סינון שפה
+    document.getElementById('languageFilter').addEventListener('change', (e) => {
+        const searchTerm = document.getElementById('searchGroups').value.trim();
+        filterGroups(searchTerm, e.target.value);
     });
 
     // כפתור שליחה
@@ -58,12 +67,17 @@ function setupEventListeners() {
     document.getElementById('stopButton').addEventListener('click', stopSending);
 }
 
-// סינון קבוצות לפי טקסט חיפוש
-function filterGroups(searchTerm) {
+// סינון קבוצות לפי טקסט ולפי שפה
+function filterGroups(searchTerm = '', languageFilter = 'all') {
     const groupElements = document.querySelectorAll('.group-item');
-    groupElements.forEach(element => {
+    groupElements.forEach((element, index) => {
         const groupName = element.querySelector('label').textContent.toLowerCase();
-        element.style.display = groupName.includes(searchTerm) ? '' : 'none';
+        const matchesSearch = groupName.includes(searchTerm.toLowerCase());
+        const matchesLanguage = languageFilter === 'all' || 
+            (languageFilter === 'arabic' && groups[index].isArabic) ||
+            (languageFilter === 'hebrew' && !groups[index].isArabic);
+        
+        element.style.display = matchesSearch && matchesLanguage ? '' : 'none';
     });
 }
 
@@ -182,7 +196,7 @@ function updateUIForSending(isSending) {
     document.getElementById('searchGroups').disabled = isSending;
 }
 
-// עדכון מד ההתקדמות
+// עדכון מד התקדמות
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
