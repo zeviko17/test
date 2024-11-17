@@ -1,21 +1,26 @@
+document.addEventListener('DOMContentLoaded', async () => {
+    // בדיקת התחברות
+    if (sessionStorage.getItem('isLoggedIn')) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        // טעינת הקבוצות והגדרת מאזינים רק אם המשתמש מחובר
+        await loadGroups();
+        setupEventListeners();
+    }
+});
+
 function checkAccess() {
     const inputCode = document.getElementById('accessCode').value;
     if (inputCode === window.ENV_accessCode) {
         sessionStorage.setItem('isLoggedIn', 'true');
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
+        loadGroups();
+        setupEventListeners();
     } else {
         alert('קוד גישה שגוי');
     }
 }
-
-// בדיקת התחברות בטעינת הדף
-document.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('isLoggedIn')) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-    }
-});
 
 let isProcessing = false;
 let shouldStop = false;
@@ -32,12 +37,6 @@ const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/
 
 // מערך לשמירת הקבוצות
 let groups = [];
-
-// אתחול הדף
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadGroups();
-    setupEventListeners();
-});
 
 // טעינת קבוצות מהגיליון
 async function loadGroups() {
@@ -61,7 +60,6 @@ async function loadGroups() {
         alert('שגיאה בטעינת הקבוצות');
     }
 }
-
 // הגדרת מאזיני אירועים
 function setupEventListeners() {
     // חיפוש קבוצות
@@ -144,7 +142,7 @@ async function startSending() {
     }
 
     if (isProcessing) {
-        alert('תהליך שליחה כבר פעל');
+        alert('תהליך שליחה כבר פועל');
         return;
     }
 
@@ -206,7 +204,7 @@ function updateUIForSending(isSending) {
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
-    document.getElementById('progressText').textContent = `נשלחו ${current} מהתוך ${total} הודעות`;
+    document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
 }
 
 // עצירת תהליך השליחה
