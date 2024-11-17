@@ -71,6 +71,7 @@ function filterGroups(searchTerm) {
 
 // סינון קבוצות לפי תגית #
 function filterHebrewGroups() {
+    console.log('לחצת על כפתור עברית'); // לוג לבדיקה
     const groupElements = document.querySelectorAll('.group-item');
     groupElements.forEach(element => {
         const groupName = element.querySelector('label').textContent;
