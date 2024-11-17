@@ -254,7 +254,8 @@
         <div class="groups-section">
             <h2>בחירת קבוצות</h2>
             <input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
-            <div class="select-buttons">
+            
+                <button onclick="filterHebrewGroups()" class="secondary">עברית</button>
                 <button onclick="selectAll()" class="secondary">בחר הכל</button>
                 <button onclick="clearAll()" class="secondary">נקה הכל</button>
             </div>
@@ -274,6 +275,16 @@
     </div>
 </script>
     <script src="config.js"></script>
-    <script src="script.js"></script>
+    
+    <script>
+        function filterHebrewGroups() {
+            const groupElements = document.querySelectorAll('.group-item');
+            groupElements.forEach(element => {
+                const groupName = element.querySelector('label').textContent;
+                const isHebrewGroup = groupName.includes('#');
+                element.style.display = isHebrewGroup ? '' : 'none';
+            });
+        }
+    </script>
 </body>
 </html>
