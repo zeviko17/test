@@ -1,3 +1,22 @@
+function checkAccess() {
+    const inputCode = document.getElementById('accessCode').value;
+    if (inputCode === window.ENV_accessCode) {
+        sessionStorage.setItem('isLoggedIn', 'true');
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+    } else {
+        alert('קוד גישה שגוי');
+    }
+}
+
+// בדיקת התחברות בטעינת הדף
+document.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('isLoggedIn')) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+    }
+});
+
 let isProcessing = false;
 let shouldStop = false;
 
@@ -125,7 +144,7 @@ async function startSending() {
     }
 
     if (isProcessing) {
-        alert('תהליך שליחה כבר פועל');
+        alert('תהליך שליחה כבר פעל');
         return;
     }
 
@@ -187,7 +206,7 @@ function updateUIForSending(isSending) {
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
-    document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
+    document.getElementById('progressText').textContent = `נשלחו ${current} מהתוך ${total} הודעות`;
 }
 
 // עצירת תהליך השליחה
