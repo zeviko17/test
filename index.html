@@ -232,23 +232,7 @@
                 flex-direction: column;
             }
         }
-    .language-filter {
-    margin-bottom: 1rem;
-}
-
-.language-filter select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 1rem;
-    background-color: white;
-}
-
-
-</style>
-
-
+    </style>
 </head>
 <body>
     <div class="container">
@@ -269,12 +253,7 @@
 
         <div class="groups-section">
             <h2>בחירת קבוצות</h2>
-            
-<div class="input-group language-filter">
-    <label for="languageFilter">סינון לפי שפה:</label>
-    
-<input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
-</div>
+            <input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
             <div class="select-buttons">
                 <button onclick="selectAll()" class="secondary">בחר הכל</button>
                 <button onclick="clearAll()" class="secondary">נקה הכל</button>
@@ -293,7 +272,7 @@
             <div id="progressText" class="progress-text"></div>
         </div>
     </div>
-
+</script>
     <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
