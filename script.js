@@ -22,6 +22,9 @@ window.addEventListener('configLoaded', () => {
     const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${window.ENV_sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
     
     // התחלת האתחול
+    console.log('idInstance:', window.ENV_idInstance);
+    console.log('apiTokenInstance:', window.ENV_apiTokenInstance);
+    console.log('sheetId:', window.ENV_sheetId);
     loadGroups();
     setupEventListeners();
 });
@@ -29,6 +32,7 @@ window.addEventListener('configLoaded', () => {
 // טעינת הקונפיגורציה מהגיליון
 // טעינת קבוצות מהגיליון
 async function loadGroups() {
+    console.log('Loading groups from URL:', googleSheetsUrl);
     try {
         const response = await fetch(googleSheetsUrl);
         if (!response.ok) {
@@ -47,6 +51,7 @@ async function loadGroups() {
         renderGroups();
     } catch (error) {
         console.error('Error loading groups:', error);
+        console.log('Failed to load groups from URL:', googleSheetsUrl);
         alert('שגיאה בטעינת הקבוצות');
     }
 }
