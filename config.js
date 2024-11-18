@@ -7,10 +7,9 @@ async function loadConfig() {
         const text = await response.text();
         const data = JSON.parse(text.substr(47).slice(0, -2));
 
-        // מילוי הערכים מהטבלה
         data.table.rows.forEach(row => {
-            const key = row.c[0].v;    // עמודה A - סוג הקוד
-            const value = row.c[1].v;   // עמודה B - ערך הקוד
+            const key = row.c[0].v;
+            const value = row.c[1].v;
             
             switch(key) {
                 case 'idInstance':
@@ -25,11 +24,15 @@ async function loadConfig() {
             }
         });
 
-        console.log('Config values:', {
+        console.log('Config loaded successfully:', {
             idInstance: window.ENV_idInstance,
             apiTokenInstance: window.ENV_apiTokenInstance,
             sheetId: window.ENV_sheetId
         });
+
+        // רק אחרי שהקונפיג נטען, נטען את הקבוצות
+        await loadGroups();
+
     } catch (error) {
         console.error('Error loading config:', error);
         window.ENV_idInstance = 'ERROR_LOADING';
@@ -38,4 +41,7 @@ async function loadConfig() {
     }
 }
 
-loadConfig();
+// מסיר את הטעינה האוטומטית של loadGroups
+document.addEventListener('DOMContentLoaded', () => {
+    loadConfig();  // רק טוען את הקונפיג, והוא יטען את הקבוצות
+});
