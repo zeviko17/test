@@ -160,7 +160,7 @@ function clearAll() {
 // התחלת תהליך השליחה
 async function startSending() {
     const securityCode = document.getElementById('securityCode').value.trim();
-    if (securityCode !== '0525410049') {
+    if (securityCode !== window.ENV_code) {
         alert('קוד שגוי');
         return;
     }
