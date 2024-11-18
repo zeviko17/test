@@ -7,8 +7,8 @@ let groups = [];
 // אתחול הדף
 window.addEventListener('configLoaded', () => {
     // אתחול הפרמטרים עם הערכים שנטענו
-    const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendMessage/${window.ENV_apiTokenInstance}`;
-    const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendFileByUrl/${window.ENV_apiTokenInstance}`;
+    window.apiBaseUrl = `https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendMessage/${window.ENV_apiTokenInstance}`;
+    window.apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendFileByUrl/${window.ENV_apiTokenInstance}`;
     const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${window.ENV_sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
     
     // התחלת האתחול
@@ -248,7 +248,7 @@ function stopSending() {
 
 // שליחת הודעת טקסט
 async function sendTextMessage(chatId, message) {
-    const response = await fetch(apiBaseUrl, {
+    const response = await fetch(window.apiBaseUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -269,7 +269,7 @@ async function sendTextMessage(chatId, message) {
 
 // שליחת הודעה עם תמונה
 async function sendImageMessage(chatId, message, imageUrl) {
-    const response = await fetch(apiSendFileUrl, {
+    const response = await fetch(window.apiSendFileUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
