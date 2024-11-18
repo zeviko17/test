@@ -13,14 +13,14 @@ window.addEventListener('configLoaded', () => {
     console.log('idInstance:', window.ENV_idInstance);
     console.log('apiTokenInstance:', window.ENV_apiTokenInstance);
     console.log('sheetId:', window.ENV_sheetId);
-    loadGroups();
+    loadGroups(googleSheetsUrl);
     setupEventListeners();
 });
 
 // טעינת הקונפיגורציה מהגיליון
 // טעינת קבוצות מהגיליון
-async function loadGroups() {
-    console.log('Loading groups from URL:', googleSheetsUrl);
+async function loadGroups(googleSheetsUrl) {
+    console.log('Loading groups from updated URL:', googleSheetsUrl);
     try {
         const response = await fetch(googleSheetsUrl);
         if (!response.ok) {
