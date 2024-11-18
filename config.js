@@ -24,24 +24,12 @@ async function loadConfig() {
             }
         });
 
-        console.log('Config loaded successfully:', {
-            idInstance: window.ENV_idInstance,
-            apiTokenInstance: window.ENV_apiTokenInstance,
-            sheetId: window.ENV_sheetId
-        });
-
-        // רק אחרי שהקונפיג נטען, נטען את הקבוצות
-        await loadGroups();
+        // רק אחרי שהקונפיג נטען, נפעיל את האירוע
+        window.dispatchEvent(new Event('configLoaded'));
 
     } catch (error) {
         console.error('Error loading config:', error);
-        window.ENV_idInstance = 'ERROR_LOADING';
-        window.ENV_apiTokenInstance = 'ERROR_LOADING';
-        window.ENV_sheetId = 'ERROR_LOADING';
     }
 }
 
-// מסיר את הטעינה האוטומטית של loadGroups
-document.addEventListener('DOMContentLoaded', () => {
-    loadConfig();  // רק טוען את הקונפיג, והוא יטען את הקבוצות
-});
+loadConfig();  // מפעיל את הטעינה
