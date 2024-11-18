@@ -21,6 +21,9 @@ async function loadConfig() {
                 case 'sheetId':
                     window.ENV_sheetId = value;
                     break;
+                case 'code':
+                    window.ENV_code = value;
+                    break;
             }
         });
 
