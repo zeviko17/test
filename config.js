@@ -5,12 +5,13 @@ async function loadConfig() {
         
         const response = await fetch(url);
         const text = await response.text();
-        const json = JSON.parse(text.substring(47).slice(0, -2));
-        
-        const rows = json.table.rows;
-        for (let row of rows) {
-            const key = row.c[0].v;
-            const value = row.c[1].v;
+        const data = JSON.parse(text.substr(47).slice(0, -2));
+
+        // מילוי הערכים מהטבלה
+        data.table.rows.forEach(row => {
+            const key = row.c[0].v;    // עמודה A - סוג הקוד
+            const value = row.c[1].v;   // עמודה B - ערך הקוד
+            
             switch(key) {
                 case 'idInstance':
                     window.ENV_idInstance = value;
@@ -22,8 +23,8 @@ async function loadConfig() {
                     window.ENV_sheetId = value;
                     break;
             }
-        }
-        
+        });
+
         console.log('Config values:', {
             idInstance: window.ENV_idInstance,
             apiTokenInstance: window.ENV_apiTokenInstance,
@@ -37,5 +38,4 @@ async function loadConfig() {
     }
 }
 
-// נריץ את הקונפיגורציה כשהדף נטען
 loadConfig();
