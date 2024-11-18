@@ -1,13 +1,18 @@
 async function loadConfig() {
     try {
-        const response = await fetch('https://wispy-darkness-a08f.zaviner.workers.dev/');
+        const response = await fetch('https://wispy-darkness-a08f.zaviner.workers.dev', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        if (!response.ok) throw new Error('Network response was not ok');
         const config = await response.json();
         window.ENV_idInstance = config.idInstance;
         window.ENV_apiTokenInstance = config.apiTokenInstance;
         window.ENV_sheetId = config.sheetId;
     } catch (error) {
         console.error('Error loading config:', error);
-        // במקרה של שגיאה נשתמש בערכי ברירת מחדל (אפשר להסיר או לשנות אותם)
         window.ENV_idInstance = 'ERROR_LOADING';
         window.ENV_apiTokenInstance = 'ERROR_LOADING';
         window.ENV_sheetId = 'ERROR_LOADING';
@@ -19,5 +24,4 @@ async function loadConfig() {
     });
 }
 
-// טען את הקונפיגורציה כשהדף נטען
 loadConfig();
