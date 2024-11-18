@@ -15,10 +15,52 @@ const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/
 let groups = [];
 
 // אתחול הדף
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadGroups();
+window.addEventListener('configLoaded', () => {
+    // נגדיר מחדש את המשתנים אחרי שהקונפיג נטען
+    const idInstance = window.ENV_idInstance;
+    const apiTokenInstance = window.ENV_apiTokenInstance;
+    const apiBaseUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
+    const apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${idInstance}/sendFileByUrl/${apiTokenInstance}`;
+    const sheetId = window.ENV_sheetId;
+    const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
+    
+    loadGroups();
     setupEventListeners();
 });
+
+// טעינת הקונפיגורציה מהגיליון
+async function loadConfig() {
+    try {
+        const configSheetId = '1NCqsgITFH1TdlkWsb5NR3-SOjDyAgmGidHBLq2FPe0I';
+        const url = `https://docs.google.com/spreadsheets/d/${configSheetId}/gviz/tq?tqx=out:json&sheet=Sheet1`;
+        
+        const response = await fetch(url);
+        const text = await response.text();
+        const data = JSON.parse(text.substr(47).slice(0, -2));
+
+        data.table.rows.forEach(row => {
+            const key = row.c[0].v;
+            const value = row.c[1].v;
+            
+            switch(key) {
+                case 'idInstance':
+                    window.ENV_idInstance = value;
+                    break;
+                case 'apiTokenInstance':
+                    window.ENV_apiTokenInstance = value;
+                    break;
+                case 'sheetId':
+                    window.ENV_sheetId = value;
+                    break;
+            }
+        });
+
+        // יצירת אירוע מותאם אישית כשהקונפיג מוכן
+        window.dispatchEvent(new Event('configLoaded'));
+    } catch (error) {
+        console.error('Error loading config:', error);
+    }
+}
 
 // טעינת קבוצות מהגיליון
 async function loadGroups() {
