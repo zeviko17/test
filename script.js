@@ -159,6 +159,11 @@ function clearAll() {
 
 // התחלת תהליך השליחה
 async function startSending() {
+    const securityCode = document.getElementById('securityCode').value.trim();
+    if (securityCode !== '0525410049') {
+        alert('קוד שגוי');
+        return;
+    }
     const messageText = document.getElementById('messageText').value.trim();
     const imageUrl = document.getElementById('imageUrl').value.trim();
     const selectedGroups = groups.filter(group => group.checked);
