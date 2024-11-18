@@ -1,6 +1,6 @@
 async function loadConfig() {
     try {
-        const response = await fetch('https://wispy-darkness-a08f.zaviner.workers.dev', {
+        const response = await fetch('http://wispy-darkness-a08f.zaviner.workers.dev', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json'
@@ -11,6 +11,7 @@ async function loadConfig() {
         window.ENV_idInstance = config.idInstance;
         window.ENV_apiTokenInstance = config.apiTokenInstance;
         window.ENV_sheetId = config.sheetId;
+        console.log('Config loaded successfully:', config);  // לוג חדש לדיבוג
     } catch (error) {
         console.error('Error loading config:', error);
         window.ENV_idInstance = 'ERROR_LOADING';
