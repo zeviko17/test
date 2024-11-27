@@ -256,7 +256,7 @@ function updateUIForSending(isSending) {
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
-    document.getElementById('progressText').textContent = נשלחו ${current} מתוך ${total} הודעות`;
+    document.getElementById('progressText').textContent = `נשלחו חיבורים, תמצא``;
 }
 
 // עצירת תהליך השליחה
