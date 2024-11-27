@@ -6,7 +6,6 @@ async function loadConfig() {
         const response = await fetch(url);
         const text = await response.text();
         const data = JSON.parse(text.substr(47).slice(0, -2));
-
         data.table.rows.forEach(row => {
             const key = row.c[0].v;
             const value = row.c[1].v;
@@ -24,15 +23,14 @@ async function loadConfig() {
                 case 'code':
                     window.ENV_code = value;
                     break;
+                case 'githubToken':
+                    window.ENV_githubToken = value;
+                    break;
             }
         });
-
-        // רק אחרי שהקונפיג נטען, נפעיל את האירוע
         window.dispatchEvent(new Event('configLoaded'));
-
     } catch (error) {
         console.error('Error loading config:', error);
     }
 }
-
-loadConfig();  // מפעיל את הטעינה
+loadConfig();
