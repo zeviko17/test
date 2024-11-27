@@ -214,14 +214,8 @@ async function startSending() {
 
         try {
             if (selectedFile) {
-                // Convert file to base64
-                const base64Data = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result.split(',')[1]);
-                    reader.readAsDataURL(selectedFile);
-                });
-                
-                await sendFileMessage(group.id, messageText, base64Data, selectedFile.name);
+                const imageUrl = await uploadToGithub(selectedFile);
+                await sendImageMessage(group.id, messageText, imageUrl);
             } else {
                 await sendTextMessage(group.id, messageText);
             }
@@ -262,7 +256,7 @@ function updateUIForSending(isSending) {
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
-    document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
+    document.getElementById('progressText').textContent = נשלחו ${current} מתוך ${total} הודעות`;
 }
 
 // עצירת תהליך השליחה
@@ -337,4 +331,35 @@ async function sendFileMessage(chatId, message, base64Data, fileName) {
     }
 
     return response.json();
+}
+
+// עלאת קובץ לגיתהב 
+async function uploadToGithub(file) {
+    const base64Data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+        reader.readAsDataURL(file);
+    });
+
+    const timestamp = new Date().getTime();
+    const filename = `images/${timestamp}_${file.name}`;
+    
+    const response = await fetch(`https://api.github.com/repos/sadikyy/whatsapp-sender/contents/${filename}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${window.ENV_githubToken}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: `Upload ${filename}`,
+            content: base64Data
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to upload to Github');
+    }
+
+    const data = await response.json();
+    return data.content.download_url;
 }
