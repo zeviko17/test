@@ -255,7 +255,6 @@ function updateUIForSending(isSending) {
     document.getElementById('progressText').style.display = isSending ? 'block' : 'none';
     
     document.getElementById('messageText').disabled = isSending;
-    document.getElementById('imageUrl').disabled = isSending;
     document.getElementById('searchGroups').disabled = isSending;
 }
 
