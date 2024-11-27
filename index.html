@@ -204,6 +204,19 @@
             display: none;
         }
 
+        /* Image Preview */
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
         /* Responsive Design */
         @media (max-width: 576px) {
             body {
@@ -245,8 +258,9 @@
                     <textarea id="messageText" placeholder="הקלד את תוכן ההודעה כאן..." required></textarea>
                 </div>
                 <div class="input-group">
-                    <label for="imageUrl">קישור לתמונה (אופציונלי):</label>
-                    <input type="text" id="imageUrl" placeholder="הכנס קישור לתמונה">
+                    <label for="imageFile">העלאת תמונה (אופציונלי):</label>
+                    <input type="file" id="imageFile" accept="image/*">
+                    <div id="imagePreview" class="image-preview"></div>
                 </div>
             </div>
         </div>
