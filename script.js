@@ -1,4 +1,3 @@
-
 let isProcessing = false;
 let shouldStop = false;
 // מערך לשמירת הקבוצות
