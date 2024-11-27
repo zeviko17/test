@@ -1,6 +1,6 @@
-
 let isProcessing = false;
 let shouldStop = false;
+let selectedFile = null;
 // מערך לשמירת הקבוצות
 let groups = [];
 
@@ -17,6 +17,7 @@ window.addEventListener('configLoaded', () => {
     console.log('sheetId:', window.ENV_sheetId);
     loadGroups(googleSheetsUrl);
     setupEventListeners();
+    setupFileUpload();
 });
 
 // טעינת הקונפיגורציה מהגיליון
@@ -63,6 +64,24 @@ function setupEventListeners() {
     
     // כפתור עצירה
     document.getElementById('stopButton').addEventListener('click', stopSending);
+}
+
+// הגדרת העלאת קובץ
+function setupFileUpload() {
+    const fileInput = document.getElementById('imageFile');
+    const preview = document.getElementById('imagePreview');
+    
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 }
 
 // סינון קבוצות לפי טקסט חיפוש
@@ -165,7 +184,6 @@ async function startSending() {
         return;
     }
     const messageText = document.getElementById('messageText').value.trim();
-    const imageUrl = document.getElementById('imageUrl').value.trim();
     const selectedGroups = groups.filter(group => group.checked);
 
     if (!messageText) {
@@ -195,12 +213,16 @@ async function startSending() {
         }
 
         try {
-            // שליחת ההודעה
-            if (imageUrl) {
-                // שליחת תמונה עם טקסט
-                await sendImageMessage(group.id, messageText, imageUrl);
+            if (selectedFile) {
+                // Convert file to base64
+                const base64Data = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+                    reader.readAsDataURL(selectedFile);
+                });
+                
+                await sendFileMessage(group.id, messageText, base64Data, selectedFile.name);
             } else {
-                // שליחת טקסט בלבד
                 await sendTextMessage(group.id, messageText);
             }
             sent++;
@@ -284,6 +306,29 @@ async function sendImageMessage(chatId, message, imageUrl) {
             caption: message,
             urlFile: imageUrl,
             fileName: 'image.jpg'
+        })
+    });
+
+    if (!response.ok) {
+        const errorDetails = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
+    }
+
+    return response.json();
+}
+
+// שליחת הודעה עם קובץ
+async function sendFileMessage(chatId, message, base64Data, fileName) {
+    const response = await fetch(`https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendFileByUpload/${window.ENV_apiTokenInstance}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            chatId: chatId,
+            caption: message,
+            file: base64Data,
+            fileName: fileName
         })
     });
 
