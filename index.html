@@ -46,18 +46,21 @@
             color: #212529;
         }
 
-        textarea {
+        textarea, input[type="text"] {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #dee2e6;
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.2s;
+        }
+
+        textarea {
             resize: vertical;
             min-height: 100px;
         }
 
-        textarea:focus {
+        textarea:focus, input[type="text"]:focus {
             outline: none;
             border-color: #0d6efd;
             box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
@@ -93,10 +96,173 @@
             border-radius: 4px;
         }
 
-        /* Rest of your existing CSS... */
+        /* Groups Section */
+        .groups-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
 
-        /* Mobile Optimization */
+        .search-box {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+        }
+
+        .groups-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: white;
+        }
+
+        .group-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .group-item input[type="checkbox"] {
+            margin-left: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .group-item label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+            padding-right: 10px;
+        }
+
+        /* Select Buttons */
+        .select-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        /* Buttons */
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        button.primary {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+        }
+
+        button.primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        button.secondary {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #212529;
+        }
+
+        button.secondary:hover {
+            background-color: #e9ecef;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #0d6efd;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        #stopButton {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        #stopButton:hover {
+            background-color: #bb2d3b;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive Design */
         @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 0 10px;
+                margin-top: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .groups-list {
+                max-height: 300px;
+            }
+
+            button {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .select-buttons {
+                flex-direction: column;
+            }
+
             .file-upload-btn {
                 padding: 25px 50px;
                 font-size: 1.5rem;
@@ -129,145 +295,34 @@
             </div>
         </div>
 
-        <!-- Rest of your existing HTML... -->
+        <div class="groups-section">
+            <h2>בחירת קבוצות</h2>
+            <input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
+            <div class="select-buttons">
+                <button onclick="selectAll()" class="secondary">בחר הכל</button>
+                <button onclick="clearAll()" class="secondary">נקה הכל</button>
+                <button id="filterHebrewButton" class="secondary">עברית</button>
+                <button id="filterArabicButton" class="secondary">ערבית</button>
+            </div>
+            <div id="groupsList" class="groups-list">
+                <!-- הקבוצות יתווספו כאן דינמית -->
+            </div>
+        </div>
+
+        <div class="send-section">
+            <div class="input-group">
+                <label for="securityCode">הכנס קוד לשליחה:</label>
+                <input type="text" id="securityCode" placeholder="הכנס קוד לשליחה">
+            </div>
+            <button id="sendButton" class="primary">שלח לקבוצות שנבחרו</button>
+            <button id="stopButton" class="hidden">עצור שליחה</button>
+            <div id="progressBar" class="progress-bar" style="display: none;">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="progressText" class="progress-text" style="display: none;"></div>
+        </div>
     </div>
-
-    <script>
-        let selectedFile = null;
-        let isProcessing = false;
-        let shouldStop = false;
-        let groups = [];
-
-        function setupFileUpload() {
-            const fileInput = document.getElementById('imageFile');
-            const preview = document.getElementById('imagePreview');
-            const uploadButton = document.querySelector('.file-upload-btn');
-
-            // Handle button click
-            uploadButton.addEventListener('click', () => {
-                fileInput.click();
-            });
-            
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    selectedFile = file;
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-
-        async function startSending() {
-            const securityCode = document.getElementById('securityCode').value.trim();
-            if (securityCode !== window.ENV_code) {
-                alert('קוד שגוי');
-                return;
-            }
-            
-            const messageText = document.getElementById('messageText').value.trim();
-            const selectedGroups = groups.filter(group => group.checked);
-
-            if (!messageText) {
-                alert('יש להזין תוכן הודעה');
-                return;
-            }
-
-            if (selectedGroups.length === 0) {
-                alert('יש לבחור לפחות קבוצה אחת');
-                return;
-            }
-
-            if (isProcessing) {
-                alert('תהליך שליחה כבר פעיל');
-                return;
-            }
-
-            isProcessing = true;
-            shouldStop = false;
-            updateUIForSending(true);
-
-            let sent = 0;
-            for (const group of selectedGroups) {
-                if (shouldStop) break;
-
-                try {
-                    if (selectedFile) {
-                        const base64Data = await new Promise((resolve) => {
-                            const reader = new FileReader();
-                            reader.onload = (e) => resolve(e.target.result.split(',')[1]);
-                            reader.readAsDataURL(selectedFile);
-                        });
-                        
-                        await sendFileMessage(group.id, messageText, base64Data, selectedFile.name);
-                    } else {
-                        await sendTextMessage(group.id, messageText);
-                    }
-                    sent++;
-                    updateProgress(sent, selectedGroups.length);
-                } catch (error) {
-                    console.error(`Error sending to ${group.name}:`, error);
-                }
-
-                if (sent < selectedGroups.length && !shouldStop) {
-                    await new Promise(resolve => setTimeout(resolve, 10000));
-                }
-            }
-
-            isProcessing = false;
-            updateUIForSending(false);
-            
-            if (shouldStop) {
-                alert('תהליך השליחה הופסק');
-            } else {
-                alert('תהליך השליחה הושלם');
-            }
-        }
-
-        function updateUIForSending(isSending) {
-            document.getElementById('sendButton').style.display = isSending ? 'none' : 'block';
-            document.getElementById('stopButton').style.display = isSending ? 'block' : 'none';
-            document.getElementById('progressBar').style.display = isSending ? 'block' : 'none';
-            document.getElementById('progressText').style.display = isSending ? 'block' : 'none';
-            
-            document.getElementById('messageText').disabled = isSending;
-            document.getElementById('searchGroups').disabled = isSending;
-            document.querySelector('.file-upload-btn').style.pointerEvents = isSending ? 'none' : 'auto';
-            document.querySelector('.file-upload-btn').style.opacity = isSending ? '0.6' : '1';
-        }
-
-        async function sendFileMessage(chatId, message, base64Data, fileName) {
-            const response = await fetch(`https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendFileByUpload/${window.ENV_apiTokenInstance}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    chatId: chatId,
-                    caption: message,
-                    file: base64Data,
-                    fileName: fileName
-                })
-            });
-
-            if (!response.ok) {
-                const errorDetails = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
-            }
-
-            return response.json();
-        }
-
-        // Add to your existing event listener
-        window.addEventListener('configLoaded', () => {
-            // Your existing code...
-            setupFileUpload();
-        });
-
-        // Rest of your existing JavaScript...
-    </script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
