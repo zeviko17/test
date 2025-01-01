@@ -126,23 +126,22 @@ function clearAll() {
     });
 }
 
-
 async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     const maxRetries = 3;
     let lastError = null;
     let apiResponse = null;
-    const chatIdRegex = /^(\d+@c\.us|\d+-\d+@g\.us)$/;
+    // const chatIdRegex = /^(\d+@c\.us|\d+-\d+@g\.us)$/; // בדיקה מיותרת הוסרה
 
-    if (!chatIdRegex.test(group.id)) {
-         sendResults.push({
-            groupName: group.name,
-            chatId: group.id,
-            status: 'failed',
-            error: 'פורמט מזהה קבוצה לא תקין',
-              fullResponse: null
-          });
-        return false;
-    }
+    // if (!chatIdRegex.test(group.id)) {  // בדיקה מיותרת הוסרה
+    //      sendResults.push({
+    //         groupName: group.name,
+    //         chatId: group.id,
+    //         status: 'failed',
+    //         error: 'פורמט מזהה קבוצה לא תקין',
+    //           fullResponse: null
+    //       });
+    //     return false;
+    // }
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -163,7 +162,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                   throw new Error('תגובה ריקה מהשרת');
             }
 
-             if (apiResponse.error || apiResponse.message) {
+            if (apiResponse.error || apiResponse.message) {
                     sendResults.push({
                         groupName: group.name,
                         chatId: group.id,
@@ -255,6 +254,7 @@ async function startSending() {
     const sendPromises = selectedGroups.map(group =>
         sendMessageWithRetry(group, messageText, imageUrl)
     );
+    
      await Promise.all(sendPromises);
 
     sendResults.forEach(result => {
@@ -266,7 +266,7 @@ async function startSending() {
              results.warning++;
         }
     });
-
+    
 
     updateProgress(results.success + results.failed + results.warning, selectedGroups.length);
     isProcessing = false;
@@ -291,7 +291,6 @@ function updateUIForSending(isSending) {
     }
 }
 
-
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
@@ -305,8 +304,9 @@ function stopSending() {
     }
 }
 
+
 async function sendTextMessage(chatId, message) {
-     try {
+    try {
         const response = await fetch(window.apiBaseUrl, {
             method: 'POST',
             headers: {
@@ -351,8 +351,7 @@ async function sendImageMessage(chatId, message, imageUrl) {
                 fileName: 'image.jpg'
             })
         });
-
-          if (!response.ok) {
+         if (!response.ok) {
              const errorDetails = await response.text();
             let errorJson;
             try {
@@ -360,10 +359,10 @@ async function sendImageMessage(chatId, message, imageUrl) {
             } catch (parseError) {
                  errorJson = { error: errorDetails };
             }
-            throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
+             throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
          }
         const responseData = await response.json();
-        console.log("API Response (Success):", responseData);
+         console.log("API Response (Success):", responseData);
         return responseData;
 
     } catch (error) {
@@ -371,6 +370,7 @@ async function sendImageMessage(chatId, message, imageUrl) {
        throw error;
     }
 }
+
 
 function displaySendResults() {
     const statusDiv = document.getElementById('sendingStatus');
