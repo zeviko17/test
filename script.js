@@ -3,6 +3,35 @@ let shouldStop = false;
 // מערך לשמירת הקבוצות
 let groups = [];
 
+// פונקציית הלוגים החדשה
+async function logToSheet(logData) {
+    try {
+        const logSheetUrl = `https://docs.google.com/spreadsheets/d/${window.ENV_sheetId}/gviz/tq?tqx=out:csv&sheet=log`;
+        const response = await fetch(logSheetUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                values: [[
+                    new Date().toISOString(),
+                    logData.groupName,
+                    logData.groupId,
+                    logData.status,
+                    logData.errorDetails || '',
+                    logData.apiResponse || ''
+                ]]
+            })
+        });
+        
+        if (!response.ok) {
+            console.error('Failed to log to sheet:', await response.text());
+        }
+    } catch (error) {
+        console.error('Error logging to sheet:', error);
+    }
+}
+
 // אתחול הדף
 window.addEventListener('configLoaded', () => {
     // אתחול הפרמטרים עם הערכים שנטענו
@@ -18,7 +47,6 @@ window.addEventListener('configLoaded', () => {
     setupEventListeners();
 });
 
-// טעינת הקונפיגורציה מהגיליון
 // טעינת קבוצות מהגיליון
 async function loadGroups(googleSheetsUrl) {
     console.log('Loading groups from updated URL:', googleSheetsUrl);
@@ -47,20 +75,13 @@ async function loadGroups(googleSheetsUrl) {
 
 // הגדרת מאזיני אירועים
 function setupEventListeners() {
-    // כפתור סינון עברית
     document.getElementById('filterHebrewButton').addEventListener('click', filterHebrewGroups);
-    // כפתור סינון ערבית
     document.getElementById('filterArabicButton').addEventListener('click', filterArabicGroups);
-    // חיפוש קבוצות
     document.getElementById('searchGroups').addEventListener('input', (e) => {
         const searchTerm = e.target.value.trim().toLowerCase();
         filterGroups(searchTerm);
     });
-
-    // כפתור שליחה
     document.getElementById('sendButton').addEventListener('click', startSending);
-    
-    // כפתור עצירה
     document.getElementById('stopButton').addEventListener('click', stopSending);
 }
 
@@ -82,12 +103,6 @@ function filterHebrewGroups() {
         const index = parseInt(element.getAttribute('data-index'));
         if (!isNaN(index) && index < groups.length) {
             const group = groups[index];
-            console.log(`Checking group ${index}:`, { 
-                name: group.name, 
-                tag: group.tag,
-                isHebrew: !group.tag.includes('#')
-            });
-            
             const isHebrewGroup = !group.tag || !group.tag.includes('#');
             element.style.display = isHebrewGroup ? '' : 'none';
         }
@@ -103,12 +118,6 @@ function filterArabicGroups() {
         const index = parseInt(element.getAttribute('data-index'));
         if (!isNaN(index) && index < groups.length) {
             const group = groups[index];
-            console.log(`Checking group ${index}:`, { 
-                name: group.name, 
-                tag: group.tag,
-                isArabic: group.tag?.includes('#')
-            });
-            
             const isArabicGroup = group.tag && group.tag.includes('#');
             element.style.display = isArabicGroup ? '' : 'none';
         }
@@ -123,7 +132,7 @@ function renderGroups() {
     groups.forEach((group, index) => {
         const div = document.createElement('div');
         div.className = 'group-item';
-        div.setAttribute('data-index', index); // הוסף את המאפיין data-index
+        div.setAttribute('data-index', index);
         div.innerHTML = 
             `<input type="checkbox" id="group${index}" ${group.checked ? 'checked' : ''}>
             <label for="group${index}">${group.name}</label>`;
@@ -156,7 +165,55 @@ function clearAll() {
     });
 }
 
-// התחלת תהליך השליחה
+// פונקציית השליחה המשופרת עם ניסיונות חוזרים
+async function sendMessageWithRetry(group, messageText, imageUrl = null) {
+    const maxRetries = 3;
+    let lastError = null;
+    let apiResponse = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            if (imageUrl) {
+                apiResponse = await sendImageMessage(group.id, messageText, imageUrl);
+            } else {
+                apiResponse = await sendTextMessage(group.id, messageText);
+            }
+
+            // לוג הצלחה
+            await logToSheet({
+                groupName: group.name,
+                groupId: group.id,
+                status: 'success',
+                apiResponse: JSON.stringify(apiResponse)
+            });
+
+            return true;
+
+        } catch (error) {
+            lastError = error;
+            console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
+
+            // אם זו לא הפעם האחרונה, נחכה לפני ניסיון נוסף
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
+                continue;
+            }
+        }
+    }
+
+    // לוג כישלון אחרי כל הניסיונות
+    await logToSheet({
+        groupName: group.name,
+        groupId: group.id,
+        status: 'failed',
+        errorDetails: lastError?.message || 'Unknown error',
+        apiResponse: apiResponse ? JSON.stringify(apiResponse) : ''
+    });
+
+    return false;
+}
+
+// פונקציית השליחה הראשית המשופרת
 async function startSending() {
     const securityCode = document.getElementById('securityCode').value.trim();
     if (securityCode !== window.ENV_code) {
@@ -182,45 +239,61 @@ async function startSending() {
         return;
     }
 
-    // הפעלת מצב שליחה
     isProcessing = true;
     shouldStop = false;
     updateUIForSending(true);
 
-    let sent = 0;
+    const results = {
+        total: selectedGroups.length,
+        success: 0,
+        failed: 0
+    };
+
     for (const group of selectedGroups) {
         if (shouldStop) {
             break;
         }
 
         try {
-            // שליחת ההודעה
-            if (imageUrl) {
-                // שליחת תמונה עם טקסט
-                await sendImageMessage(group.id, messageText, imageUrl);
+            const success = await sendMessageWithRetry(group, messageText, imageUrl);
+            if (success) {
+                results.success++;
             } else {
-                // שליחת טקסט בלבד
-                await sendTextMessage(group.id, messageText);
+                results.failed++;
             }
-            sent++;
-            updateProgress(sent, selectedGroups.length);
+            updateProgress(results.success, selectedGroups.length);
         } catch (error) {
-            console.error(`Error sending to ${group.name}:`, error);
+            results.failed++;
+            console.error(`Critical error with ${group.name}:`, error);
         }
 
-        if (sent < selectedGroups.length && !shouldStop) {
-            await new Promise(resolve => setTimeout(resolve, 10000)); // המתנה של 10 שניות
+        if (!shouldStop) {
+            await new Promise(resolve => setTimeout(resolve, 10000)); // שמירה על ההשהיה המקורית
         }
     }
 
-    // סיום תהליך השליחה
+    // סיכום בסיום
+    await logToSheet({
+        groupName: 'SUMMARY',
+        groupId: '-',
+        status: 'completed',
+        errorDetails: `Total: ${results.total}, Success: ${results.success}, Failed: ${results.failed}`
+    });
+
     isProcessing = false;
     updateUIForSending(false);
     
     if (shouldStop) {
-        alert('תהליך השליחה הופסק');
+        alert(`תהליך השליחה הופסק. הצלחות: ${results.success}, כשלונות: ${results.failed}`);
     } else {
-        alert('תהליך השליחה הושלם');
+        alert(`תהליך השליחה הושלם. הצלחות: ${results.success}, כשלונות: ${results.failed}`);
+    }
+}
+
+// עצירת תהליך השליחה
+function stopSending() {
+    if (isProcessing) {
+        shouldStop = true;
     }
 }
 
@@ -241,13 +314,6 @@ function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
     document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
-}
-
-// עצירת תהליך השליחה
-function stopSending() {
-    if (isProcessing) {
-        shouldStop = true;
-    }
 }
 
 // שליחת הודעת טקסט
