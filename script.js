@@ -167,6 +167,17 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
         const statusItem = document.createElement('div');
         statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
         const timestamp = new Date().toLocaleTimeString('he-IL');
+        
+        // הוספת בדיקת תקינות התגובה
+        let responseStatus = '';
+        if (apiResponse) {
+            if (apiResponse.idMessage) {
+                responseStatus = `<div style="color: #2e7d32;">✓ ההודעה נשלחה בהצלחה</div>`;
+            } else {
+                responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה</div>`;
+            }
+        }
+
         statusItem.innerHTML = `
             <div style="display: flex; justify-content: space-between;">
                 <span><strong>שעה:</strong> ${timestamp}</span>
@@ -176,8 +187,9 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
             </div>
             <strong>קבוצה:</strong> ${group.name}<br>
             <strong>מזהה:</strong> ${group.id}<br>
+            ${responseStatus}
             ${error ? `<div style="color: #d32f2f; margin-top: 4px;"><strong>שגיאה:</strong> ${error}</div>` : ''}
-            ${apiResponse ? `<div style="color: #1976d2; margin-top: 4px;"><strong>תגובת API:</strong> ${JSON.stringify(apiResponse)}</div>` : ''}
+            ${apiResponse ? `<div style="color: #1976d2; margin-top: 4px;"><strong>מזהה הודעה:</strong> ${apiResponse.idMessage || 'לא התקבל'}</div>` : ''}
         `;
         statusDiv.insertBefore(statusItem, statusDiv.firstChild);
     };
