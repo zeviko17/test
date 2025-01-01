@@ -130,10 +130,42 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     const maxRetries = 3;
     let lastError = null;
     let apiResponse = null;
-    
+
+     const addStatusToList = (status, error = null, apiResponse = null) => {
+        const statusDiv = document.getElementById('sendingStatus');
+        const statusItem = document.createElement('div');
+        statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
+        const timestamp = new Date().toLocaleTimeString('he-IL');
+        
+        let responseStatus = '';
+        if (apiResponse) {
+             if (apiResponse.idMessage) {
+                responseStatus = `<div style="color: #2e7d32;">✓ ההודעה נשלחה בהצלחה</div>`;
+            } else if (apiResponse.error || apiResponse.message) {
+                responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה</div>`;
+            } else {
+                 responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה (ללא פרטים נוספים)</div>`;
+            }
+        }
+
+        statusItem.innerHTML = `
+            <div style="display: flex; justify-content: space-between;">
+                <span><strong>שעה:</strong> ${timestamp}</span>
+                <span class="status-badge" style="padding: 2px 8px; border-radius: 4px; background-color: ${error ? '#ffebee' : '#e8f5e9'}; color: ${error ? '#d32f2f' : '#2e7d32'}">
+                    ${error ? 'נכשל' : 'הצלחה'}
+                </span>
+            </div>
+            <strong>קבוצה:</strong> ${group.name}<br>
+            <strong>מזהה:</strong> ${group.id}<br>
+            ${responseStatus}
+            ${error ? `<div style="color: #d32f2f; margin-top: 4px;"><strong>שגיאה:</strong> ${error}</div>` : ''}
+            ${apiResponse ? `<div style="color: #1976d2; margin-top: 4px;"><strong>מזהה הודעה:</strong> ${apiResponse.idMessage || 'לא התקבל'}</div>` : ''}
+        `;
+        statusDiv.insertBefore(statusItem, statusDiv.firstChild);
+    };
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
+         try {
             if (imageUrl) {
                 apiResponse = await sendImageMessage(group.id, messageText, imageUrl);
             } else {
@@ -148,6 +180,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                       error: 'תגובה ריקה מהשרת',
                       fullResponse: null
                     });
+                   addStatusToList('שליחה נכשלה', 'תגובה ריקה מהשרת', null);
                   throw new Error('תגובה ריקה מהשרת');
             }
 
@@ -159,6 +192,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                         error: `תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`,
                         fullResponse: apiResponse
                      });
+                    addStatusToList('שליחה נכשלה',`תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`, apiResponse);
                     throw new Error(`תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`);
             }
              if (!apiResponse.idMessage) {
@@ -169,7 +203,8 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                       error: 'תגובה לא תקינה מהשרת (אין idMessage)',
                        fullResponse: apiResponse
                      });
-                   console.warn(`תגובה לא תקינה מהשרת (אין idMessage) for ${group.name}:`, apiResponse);
+                    addStatusToList('אזהרה', 'תגובה לא תקינה מהשרת (אין idMessage)', apiResponse);
+                  console.warn(`תגובה לא תקינה מהשרת (אין idMessage) for ${group.name}:`, apiResponse);
                   
             } else {
                   sendResults.push({
@@ -179,11 +214,12 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                     idMessage: apiResponse.idMessage,
                     fullResponse: apiResponse
                 });
+                  addStatusToList('נשלח בהצלחה', null, apiResponse);
             }
            return true;
 
         } catch (error) {
-            lastError = error;
+             lastError = error;
             console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
             if (attempt === maxRetries) {
               sendResults.push({
@@ -193,6 +229,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                     error: error.message,
                     fullResponse: apiResponse
                 });
+               addStatusToList('שליחה נכשלה', error.message, apiResponse);
             }
             if (attempt < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
@@ -201,6 +238,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     }
     return false;
 }
+
 
 
 async function startSending() {
@@ -240,31 +278,33 @@ async function startSending() {
        warning: 0
     };
 
-    for (const group of selectedGroups) {
-         if (shouldStop) {
-            break;
-         }
-       try {
-             const success = await sendMessageWithRetry(group, messageText, imageUrl);
-             if (success) {
-                results.success++;
-             } else {
-                results.failed++;
-             }
-        }  catch (error) {
-             results.failed++;
-            console.error(`Critical error with ${group.name}:`, error);
-       }
-        if (!shouldStop && (results.success + results.failed) < selectedGroups.length) {
-            await new Promise(resolve => setTimeout(resolve, 10000)); // שמירה על ההשהיה המקורית
-        }
-    }
 
-     sendResults.forEach(result => {
-        if (result.status === 'success') {
-            results.success++;
-        } else if (result.status === 'failed') {
-            results.failed++;
+    for (const group of selectedGroups) {
+          if (shouldStop) {
+            break;
+          }
+
+         try {
+              const success = await sendMessageWithRetry(group, messageText, imageUrl);
+              if (success) {
+                  results.success++;
+              } else {
+                  results.failed++;
+                }
+         } catch (error) {
+               results.failed++;
+              console.error(`Critical error with ${group.name}:`, error);
+       }
+        if (!shouldStop  && (results.success + results.failed + results.warning) < selectedGroups.length) {
+           await new Promise(resolve => setTimeout(resolve, 10000)); // שמירה על ההשהיה המקורית
+       }
+    }
+   
+    sendResults.forEach(result => {
+       if (result.status === 'success') {
+           results.success++;
+       } else if (result.status === 'failed') {
+           results.failed++;
         }  else if (result.status === 'warning') {
            results.warning++;
         }
@@ -292,7 +332,6 @@ function updateUIForSending(isSending) {
     }
 }
 
-
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
@@ -308,7 +347,7 @@ function stopSending() {
 
 
 async function sendTextMessage(chatId, message) {
-     try {
+    try {
         const response = await fetch(window.apiBaseUrl, {
             method: 'POST',
             headers: {
@@ -330,9 +369,9 @@ async function sendTextMessage(chatId, message) {
             }
             throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
          }
-       const responseData =  await response.json();
-       console.log("API Response (Success):", responseData);
-       return responseData;
+        const responseData =  await response.json();
+        console.log("API Response (Success):", responseData);
+        return responseData;
     } catch (error) {
        console.error('Error in sendTextMessage:', error);
          throw error;
@@ -353,7 +392,6 @@ async function sendImageMessage(chatId, message, imageUrl) {
                 fileName: 'image.jpg'
             })
         });
-
           if (!response.ok) {
              const errorDetails = await response.text();
             let errorJson;
@@ -365,7 +403,7 @@ async function sendImageMessage(chatId, message, imageUrl) {
              throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
          }
         const responseData = await response.json();
-         console.log("API Response (Success):", responseData);
+        console.log("API Response (Success):", responseData);
         return responseData;
 
     } catch (error) {
