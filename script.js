@@ -423,10 +423,6 @@ function displaySendResults() {
     headerRow.innerHTML = `
       <th>קבוצה</th>
       <th>מזהה</th>
-      <th>סטטוס</th>
-      <th>שגיאה</th>
-      <th>מזהה הודעה</th>
-      <th>תגובה מלאה</th>
     `;
     
     sendResults.forEach(result => {
@@ -434,10 +430,6 @@ function displaySendResults() {
       row.innerHTML = `
         <td>${result.groupName}</td>
         <td>${result.chatId}</td>
-        <td class="${result.status === 'success' ? 'status-success' : (result.status === 'warning' ? 'status-warning' : 'status-error')}">${result.status === 'success' ? 'הצלחה' : (result.status === 'warning' ? 'אזהרה' : 'כישלון')}</td>
-        <td>${result.error || ''}</td>
-        <td>${result.idMessage || ''}</td>
-        <td><pre>${result.fullResponse ? JSON.stringify(result.fullResponse, null, 2) : ''}</pre></td>
       `;
     });
   
