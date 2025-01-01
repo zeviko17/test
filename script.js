@@ -281,16 +281,17 @@ function updateUIForSending(isSending) {
     document.getElementById('stopButton').style.display = isSending ? 'block' : 'none';
     document.getElementById('progressBar').style.display = isSending ? 'block' : 'none';
     document.getElementById('progressText').style.display = isSending ? 'block' : 'none';
-    document.getElementById('sendingStatus').style.display = isSending ? 'block' : 'none';
+    document.getElementById('sendingStatus').style.display = 'block'; // תמיד מציג את הסטטוסים
     
     document.getElementById('messageText').disabled = isSending;
     document.getElementById('imageUrl').disabled = isSending;
     document.getElementById('searchGroups').disabled = isSending;
 
-    // ניקוי רשימת הסטטוסים בתחילת שליחה חדשה
+    // ניקוי רשימת הסטטוסים רק בתחילת שליחה חדשה
     if (isSending) {
         document.getElementById('sendingStatus').innerHTML = '';
     }
+    // אם מסיימים שליחה, משאירים את הסטטוסים
 }
 
 // עדכון מד ההתקדמות
