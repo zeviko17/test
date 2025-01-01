@@ -273,12 +273,6 @@ async function startSending() {
 
     isProcessing = false;
     updateUIForSending(false);
-    
-    if (shouldStop) {
-        alert(`תהליך השליחה הופסק. הצלחות: ${results.success}, כשלונות: ${results.failed}`);
-    } else {
-        alert(`תהליך השליחה הושלם. הצלחות: ${results.success}, כשלונות: ${results.failed}`);
-    }
 }
 
 // עדכון ממשק המשתמש בזמן שליחה
