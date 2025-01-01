@@ -167,7 +167,7 @@
             cursor: not-allowed;
         }
 
-        /* Progress Bar */
+        /* Progress Bar and Status */
         .progress-bar {
             height: 8px;
             background-color: #e9ecef;
@@ -231,6 +231,7 @@
             background: #666;
         }
 
+        /* Stop Button */
         #stopButton {
             background-color: #dc3545;
             color: white;
@@ -312,11 +313,11 @@
                 <input type="text" id="securityCode" placeholder="הכנס קוד לשליחה">
             </div>
             <button id="sendButton" class="primary">שלח לקבוצות שנבחרו</button>
-            <button id="stopButton" class="hidden">עצור שליחה</button>
-            <div id="progressBar" class="progress-bar">
+            <button id="stopButton" style="display: none;">עצור שליחה</button>
+            <div id="progressBar" class="progress-bar" style="display: none;">
                 <div id="progressFill" class="progress-fill"></div>
             </div>
-            <div id="progressText" class="progress-text"></div>
+            <div id="progressText" class="progress-text" style="display: none;"></div>
             <div id="sendingStatus" class="sending-status" style="display: none;"></div>
         </div>
     </div>
