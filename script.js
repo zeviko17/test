@@ -162,7 +162,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     let apiResponse = null;
 
     // הוספת סטטוס חדש לרשימה
-    const addStatusToList = (status, error = null) => {
+    const addStatusToList = (status, error = null, apiResponse = null) => {
         const statusDiv = document.getElementById('sendingStatus');
         const statusItem = document.createElement('div');
         statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
@@ -177,6 +177,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
             <strong>קבוצה:</strong> ${group.name}<br>
             <strong>מזהה:</strong> ${group.id}<br>
             ${error ? `<div style="color: #d32f2f; margin-top: 4px;"><strong>שגיאה:</strong> ${error}</div>` : ''}
+            ${apiResponse ? `<div style="color: #1976d2; margin-top: 4px;"><strong>תגובת API:</strong> ${JSON.stringify(apiResponse)}</div>` : ''}
         `;
         statusDiv.insertBefore(statusItem, statusDiv.firstChild);
     };
@@ -189,8 +190,13 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                 apiResponse = await sendTextMessage(group.id, messageText);
             }
 
+            // בדיקת תקינות התגובה מה-API
+            if (!apiResponse || !apiResponse.idMessage) {
+                throw new Error('תגובה לא תקינה מהשרת: ' + JSON.stringify(apiResponse));
+            }
+
             // עדכון סטטוס הצלחה
-            addStatusToList('נשלח בהצלחה');
+            addStatusToList('נשלח בהצלחה', null, apiResponse);
             return true;
 
         } catch (error) {
@@ -199,7 +205,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
 
             if (attempt === maxRetries) {
                 // עדכון סטטוס כישלון
-                addStatusToList('שליחה נכשלה', error.message);
+                addStatusToList('שליחה נכשלה', error.message, apiResponse);
             }
 
             if (attempt < maxRetries) {
