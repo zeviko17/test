@@ -190,6 +190,47 @@
             margin-top: 0.5rem;
         }
 
+        /* Status List Styling */
+        .sending-status {
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: white;
+        }
+
+        .status-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Custom Scrollbar */
+        .sending-status::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sending-status::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .sending-status::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .sending-status::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
         #stopButton {
             background-color: #dc3545;
             color: white;
@@ -254,12 +295,12 @@
         <div class="groups-section">
             <h2>בחירת קבוצות</h2>
             <input type="text" id="searchGroups" class="search-box" placeholder="חיפוש קבוצות...">
-           <div class="select-buttons">
-            <button onclick="selectAll()" class="secondary">בחר הכל</button>
-            <button onclick="clearAll()" class="secondary">נקה הכל</button>
-            <button id="filterHebrewButton" class="secondary">עברית</button>
+            <div class="select-buttons">
+                <button onclick="selectAll()" class="secondary">בחר הכל</button>
+                <button onclick="clearAll()" class="secondary">נקה הכל</button>
+                <button id="filterHebrewButton" class="secondary">עברית</button>
                 <button id="filterArabicButton" class="secondary">ערבית</button>
-        </div>
+            </div>
             <div id="groupsList" class="groups-list">
                 <!-- הקבוצות יתווספו כאן דינמית -->
             </div>
@@ -276,6 +317,7 @@
                 <div id="progressFill" class="progress-fill"></div>
             </div>
             <div id="progressText" class="progress-text"></div>
+            <div id="sendingStatus" class="sending-status" style="display: none;"></div>
         </div>
     </div>
     <script src="config.js"></script>
