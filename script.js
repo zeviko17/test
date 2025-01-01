@@ -130,7 +130,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     let lastError = null;
     let apiResponse = null;
 
-    const addStatusToList = (status, error = null, apiResponse = null) => {
+     const addStatusToList = (status, error = null, apiResponse = null) => {
         const statusDiv = document.getElementById('sendingStatus');
         const statusItem = document.createElement('div');
         statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
@@ -170,19 +170,18 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
             } else {
                 apiResponse = await sendTextMessage(group.id, messageText);
             }
-
-              if (!apiResponse) {
+             if (!apiResponse) {
                   throw new Error('תגובה ריקה מהשרת');
               }
 
-               if (apiResponse.error || apiResponse.message) {
-                  throw new Error(`תגובה שגיאה מהשרת: ${JSON.stringify(apiResponse)}`);
-              }
-
-               if (!apiResponse.idMessage) {
-                  throw new Error('תגובה לא תקינה מהשרת: ' + JSON.stringify(apiResponse));
+              if (apiResponse.error || apiResponse.message) {
+                    throw new Error(`תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`);
               }
             
+              if (!apiResponse.idMessage) {
+                 throw new Error('תגובה לא תקינה מהשרת: ' + JSON.stringify(apiResponse));
+              }
+
             addStatusToList('נשלח בהצלחה', null, apiResponse);
             return true;
 
@@ -199,7 +198,6 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     }
     return false;
 }
-
 
 async function startSending() {
     const securityCode = document.getElementById('securityCode').value.trim();
@@ -240,7 +238,6 @@ async function startSending() {
         if (shouldStop) {
             break;
         }
-
          try {
              const success = await sendMessageWithRetry(group, messageText, imageUrl);
              if (success) {
@@ -253,6 +250,7 @@ async function startSending() {
              results.failed++;
              console.error(`Critical error with ${group.name}:`, error);
          }
+
 
         if (!shouldStop && (results.success + results.failed) < selectedGroups.length) {
             await new Promise(resolve => setTimeout(resolve, 10000));
@@ -305,24 +303,26 @@ async function sendTextMessage(chatId, message) {
         });
 
         if (!response.ok) {
-            const errorDetails = await response.text();
+             const errorDetails = await response.text();
             let errorJson;
             try {
                 errorJson = JSON.parse(errorDetails);
             } catch (parseError) {
-                errorJson = { error: errorDetails };
+                 errorJson = { error: errorDetails };
             }
             throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
-        }
-        return await response.json();
+         }
+       const responseData =  await response.json();
+       console.log("API Response (Success):", responseData);
+       return responseData;
     } catch (error) {
-         console.error('Error in sendTextMessage:', error);
+        console.error('Error in sendTextMessage:', error);
         throw error;
     }
 }
 
 async function sendImageMessage(chatId, message, imageUrl) {
-     try{
+    try{
         const response = await fetch(window.apiSendFileUrl, {
             method: 'POST',
             headers: {
@@ -336,8 +336,8 @@ async function sendImageMessage(chatId, message, imageUrl) {
             })
         });
 
-         if (!response.ok) {
-             const errorDetails = await response.text();
+        if (!response.ok) {
+            const errorDetails = await response.text();
              let errorJson;
              try {
                  errorJson = JSON.parse(errorDetails);
@@ -346,8 +346,10 @@ async function sendImageMessage(chatId, message, imageUrl) {
              }
              throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
          }
+        const responseData = await response.json();
+        console.log("API Response (Success):", responseData);
+        return responseData;
 
-         return await response.json();
     } catch (error) {
         console.error('Error in sendImageMessage:', error);
        throw error;
