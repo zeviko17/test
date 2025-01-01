@@ -133,32 +133,15 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     const addStatusToList = (status, error = null, apiResponse = null) => {
         const statusDiv = document.getElementById('sendingStatus');
         const statusItem = document.createElement('div');
-        statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
+        statusItem.className = 'status-item';
         const timestamp = new Date().toLocaleTimeString('he-IL');
         
-        let responseStatus = '';
-          if (apiResponse) {
-             if (apiResponse.message && apiResponse.message.status === "sent") {
-                 responseStatus = `<div style="color: #2e7d32;">✓ ההודעה נשלחה בהצלחה</div>`;
-            } else if (apiResponse.error || apiResponse.message) {
-                responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה</div>`;
-             }  else {
-                   responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה (ללא פרטים נוספים)</div>`;
-             }
-        }
-
         statusItem.innerHTML = `
             <div style="display: flex; justify-content: space-between;">
                 <span><strong>שעה:</strong> ${timestamp}</span>
-                <span class="status-badge" style="padding: 2px 8px; border-radius: 4px; background-color: ${error ? '#ffebee' : '#e8f5e9'}; color: ${error ? '#d32f2f' : '#2e7d32'}">
-                    ${error ? 'נכשל' : 'הצלחה'}
-                </span>
             </div>
             <strong>קבוצה:</strong> ${group.name}<br>
-            <strong>מזהה:</strong> ${group.id}<br>
-            ${responseStatus}
-            ${error ? `<div style="color: #d32f2f; margin-top: 4px;"><strong>שגיאה:</strong> ${error}</div>` : ''}
-            ${apiResponse ? `<div style="color: #1976d2; margin-top: 4px;"><strong>מזהה הודעה:</strong> ${apiResponse.message?.id || 'לא התקבל'}</div>` : ''}
+            <strong>מזהה:</strong> ${group.id}
         `;
         statusDiv.insertBefore(statusItem, statusDiv.firstChild);
     };
@@ -179,7 +162,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                  addStatusToList('שליחה נכשלה', 'תגובה ריקה מהשרת', null);
                   throw new Error('תגובה ריקה מהשרת');
              }
-            if (apiResponse.error || apiResponse.message) {
+            if (apiResponse.error) {
                  sendResults.push({
                       groupName: group.name,
                     chatId: group.id,
@@ -191,7 +174,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                    throw new Error(`תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`);
             }
 
-            if (apiResponse.message && apiResponse.message.status === "sent") {
+            if (apiResponse.sent && apiResponse.message?.status === 'sent') {
                 sendResults.push({
                     groupName: group.name,
                     chatId: group.id,
@@ -201,7 +184,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                  });
                  addStatusToList('נשלח בהצלחה', null, apiResponse);
                  return true;
-             }  else {
+             }  else if (apiResponse.sent && apiResponse.message?.status === 'pending') {
                  sendResults.push({
                     groupName: group.name,
                    chatId: group.id,
@@ -212,7 +195,17 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                addStatusToList('אזהרה', 'התקבל סטטוס "pending"', apiResponse);
                   console.warn(`תגובה מהשרת (סטטוס pending) for ${group.name}:`, apiResponse);
                  return true; //אם הסטטוס pending אז אל תנסה שוב
-             }
+             } else {
+                sendResults.push({
+                    groupName: group.name,
+                    chatId: group.id,
+                    status: 'failed',
+                    error: 'סטטוס לא מוכר או חסר',
+                    fullResponse: apiResponse
+                });
+                addStatusToList('שליחה נכשלה', 'סטטוס לא מוכר או חסר', apiResponse);
+                throw new Error('סטטוס לא מוכר או חסר');
+            }
          }  catch (error) {
             lastError = error;
             console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
@@ -389,10 +382,6 @@ function displaySendResults() {
     headerRow.innerHTML = `
       <th>קבוצה</th>
       <th>מזהה</th>
-      <th>סטטוס</th>
-      <th>שגיאה</th>
-      <th>מזהה הודעה</th>
-      <th>תגובה מלאה</th>
     `;
     
     sendResults.forEach(result => {
@@ -400,10 +389,6 @@ function displaySendResults() {
       row.innerHTML = `
         <td>${result.groupName}</td>
         <td>${result.chatId}</td>
-        <td class="${result.status === 'success' ? 'status-success' : (result.status === 'warning' ? 'status-warning' : 'status-error')}">${result.status === 'success' ? 'הצלחה' : (result.status === 'warning' ? 'אזהרה' : 'כישלון')}</td>
-        <td>${result.error || ''}</td>
-        <td>${result.messageId || ''}</td>
-        <td><pre>${result.fullResponse ? JSON.stringify(result.fullResponse, null, 2) : ''}</pre></td>
       `;
     });
   
