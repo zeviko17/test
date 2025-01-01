@@ -1,24 +1,20 @@
 let isProcessing = false;
 let shouldStop = false;
-// מערך לשמירת הקבוצות
 let groups = [];
 
-// אתחול הדף
 window.addEventListener('configLoaded', () => {
-    // אתחול הפרמטרים עם הערכים שנטענו
     window.apiBaseUrl = `https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendMessage/${window.ENV_apiTokenInstance}`;
     window.apiSendFileUrl = `https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendFileByUrl/${window.ENV_apiTokenInstance}`;
     const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${window.ENV_sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
     
-    // התחלת האתחול
     console.log('idInstance:', window.ENV_idInstance);
     console.log('apiTokenInstance:', window.ENV_apiTokenInstance);
     console.log('sheetId:', window.ENV_sheetId);
+    
     loadGroups(googleSheetsUrl);
     setupEventListeners();
 });
 
-// טעינת קבוצות מהגיליון
 async function loadGroups(googleSheetsUrl) {
     console.log('Loading groups from updated URL:', googleSheetsUrl);
     try {
@@ -30,9 +26,9 @@ async function loadGroups(googleSheetsUrl) {
         const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);/)[1]);
         
         groups = json.table.rows.slice(1).map(row => ({
-            name: row.c[1]?.v || '',  // עמודה B
-            id: row.c[3]?.v || '',    // עמודה D
-            tag: row.c[0]?.v || '',   // עמודה A
+            name: row.c[1]?.v || '',
+            id: row.c[3]?.v || '',
+            tag: row.c[0]?.v || '',
             checked: false
         })).filter(group => group.name && group.id);
 
@@ -44,26 +40,17 @@ async function loadGroups(googleSheetsUrl) {
     }
 }
 
-// הגדרת מאזיני אירועים
 function setupEventListeners() {
-    // כפתור סינון עברית
     document.getElementById('filterHebrewButton').addEventListener('click', filterHebrewGroups);
-    // כפתור סינון ערבית
     document.getElementById('filterArabicButton').addEventListener('click', filterArabicGroups);
-    // חיפוש קבוצות
     document.getElementById('searchGroups').addEventListener('input', (e) => {
         const searchTerm = e.target.value.trim().toLowerCase();
         filterGroups(searchTerm);
     });
-
-    // כפתור שליחה
     document.getElementById('sendButton').addEventListener('click', startSending);
-    
-    // כפתור עצירה
     document.getElementById('stopButton').addEventListener('click', stopSending);
 }
 
-// סינון קבוצות לפי טקסט חיפוש
 function filterGroups(searchTerm) {
     const groupElements = document.querySelectorAll('.group-item');
     groupElements.forEach(element => {
@@ -72,7 +59,6 @@ function filterGroups(searchTerm) {
     });
 }
 
-// סינון קבוצות לפי תגית #
 function filterHebrewGroups() {
     console.log('מפעיל סינון קבוצות עברית');
     const groupElements = document.querySelectorAll('.group-item');
@@ -81,19 +67,12 @@ function filterHebrewGroups() {
         const index = parseInt(element.getAttribute('data-index'));
         if (!isNaN(index) && index < groups.length) {
             const group = groups[index];
-            console.log(`Checking group ${index}:`, { 
-                name: group.name, 
-                tag: group.tag,
-                isHebrew: !group.tag.includes('#')
-            });
-            
             const isHebrewGroup = !group.tag || !group.tag.includes('#');
             element.style.display = isHebrewGroup ? '' : 'none';
         }
     });
 }
 
-// סינון קבוצות לפי תגית # - ערבית
 function filterArabicGroups() {
     console.log('מפעיל סינון קבוצות ערבית');
     const groupElements = document.querySelectorAll('.group-item');
@@ -102,19 +81,12 @@ function filterArabicGroups() {
         const index = parseInt(element.getAttribute('data-index'));
         if (!isNaN(index) && index < groups.length) {
             const group = groups[index];
-            console.log(`Checking group ${index}:`, { 
-                name: group.name, 
-                tag: group.tag,
-                isArabic: group.tag?.includes('#')
-            });
-            
             const isArabicGroup = group.tag && group.tag.includes('#');
             element.style.display = isArabicGroup ? '' : 'none';
         }
     });
 }
 
-// הצגת הקבוצות בדף
 function renderGroups() {
     const groupsList = document.getElementById('groupsList');
     groupsList.innerHTML = '';
@@ -135,7 +107,6 @@ function renderGroups() {
     });
 }
 
-// בחירת כל הקבוצות המוצגות
 function selectAll() {
     const visibleGroups = document.querySelectorAll('.group-item:not([style*="display: none"]) input[type="checkbox"]');
     visibleGroups.forEach(checkbox => {
@@ -145,7 +116,6 @@ function selectAll() {
     });
 }
 
-// ניקוי כל הבחירות המוצגות
 function clearAll() {
     const visibleGroups = document.querySelectorAll('.group-item:not([style*="display: none"]) input[type="checkbox"]');
     visibleGroups.forEach(checkbox => {
@@ -155,26 +125,25 @@ function clearAll() {
     });
 }
 
-// פונקציה חדשה - שליחת הודעה עם ניסיונות חוזרים
 async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     const maxRetries = 3;
     let lastError = null;
     let apiResponse = null;
 
-    // הוספת סטטוס חדש לרשימה
     const addStatusToList = (status, error = null, apiResponse = null) => {
         const statusDiv = document.getElementById('sendingStatus');
         const statusItem = document.createElement('div');
         statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
         const timestamp = new Date().toLocaleTimeString('he-IL');
         
-        // הוספת בדיקת תקינות התגובה
         let responseStatus = '';
         if (apiResponse) {
-            if (apiResponse.idMessage) {
+             if (apiResponse.idMessage) {
                 responseStatus = `<div style="color: #2e7d32;">✓ ההודעה נשלחה בהצלחה</div>`;
-            } else {
+            } else if (apiResponse.error || apiResponse.message) {
                 responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה</div>`;
+            } else {
+                 responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה (ללא פרטים נוספים)</div>`;
             }
         }
 
@@ -202,35 +171,36 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                 apiResponse = await sendTextMessage(group.id, messageText);
             }
 
-            // בדיקת תקינות התגובה מה-API
-            if (!apiResponse || !apiResponse.idMessage) {
-                throw new Error('תגובה לא תקינה מהשרת: ' + JSON.stringify(apiResponse));
-            }
+              if (!apiResponse) {
+                  throw new Error('תגובה ריקה מהשרת');
+              }
 
-            // עדכון סטטוס הצלחה
+               if (apiResponse.error || apiResponse.message) {
+                  throw new Error(`תגובה שגיאה מהשרת: ${JSON.stringify(apiResponse)}`);
+              }
+
+               if (!apiResponse.idMessage) {
+                  throw new Error('תגובה לא תקינה מהשרת: ' + JSON.stringify(apiResponse));
+              }
+            
             addStatusToList('נשלח בהצלחה', null, apiResponse);
             return true;
 
         } catch (error) {
             lastError = error;
-            console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
-
+             console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
             if (attempt === maxRetries) {
-                // עדכון סטטוס כישלון
                 addStatusToList('שליחה נכשלה', error.message, apiResponse);
             }
-
             if (attempt < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
-                continue;
             }
         }
     }
-
     return false;
 }
 
-// פונקציית השליחה הראשית המעודכנת
+
 async function startSending() {
     const securityCode = document.getElementById('securityCode').value.trim();
     if (securityCode !== window.ENV_code) {
@@ -271,21 +241,21 @@ async function startSending() {
             break;
         }
 
-        try {
-            const success = await sendMessageWithRetry(group, messageText, imageUrl);
-            if (success) {
-                results.success++;
-            } else {
-                results.failed++;
-            }
-            updateProgress(results.success + results.failed, selectedGroups.length);
-        } catch (error) {
-            results.failed++;
-            console.error(`Critical error with ${group.name}:`, error);
-        }
+         try {
+             const success = await sendMessageWithRetry(group, messageText, imageUrl);
+             if (success) {
+                 results.success++;
+             } else {
+                 results.failed++;
+             }
+             updateProgress(results.success + results.failed, selectedGroups.length);
+         } catch (error) {
+             results.failed++;
+             console.error(`Critical error with ${group.name}:`, error);
+         }
 
         if (!shouldStop && (results.success + results.failed) < selectedGroups.length) {
-            await new Promise(resolve => setTimeout(resolve, 10000)); // שמירה על ההשהיה המקורית
+            await new Promise(resolve => setTimeout(resolve, 10000));
         }
     }
 
@@ -293,79 +263,93 @@ async function startSending() {
     updateUIForSending(false);
 }
 
-// עדכון ממשק המשתמש בזמן שליחה
 function updateUIForSending(isSending) {
     document.getElementById('sendButton').style.display = isSending ? 'none' : 'block';
     document.getElementById('stopButton').style.display = isSending ? 'block' : 'none';
     document.getElementById('progressBar').style.display = isSending ? 'block' : 'none';
     document.getElementById('progressText').style.display = isSending ? 'block' : 'none';
-    document.getElementById('sendingStatus').style.display = 'block'; // תמיד מציג את הסטטוסים
+    document.getElementById('sendingStatus').style.display = 'block';
     
     document.getElementById('messageText').disabled = isSending;
     document.getElementById('imageUrl').disabled = isSending;
     document.getElementById('searchGroups').disabled = isSending;
 
-    // ניקוי רשימת הסטטוסים רק בתחילת שליחה חדשה
     if (isSending) {
         document.getElementById('sendingStatus').innerHTML = '';
     }
-    // אם מסיימים שליחה, משאירים את הסטטוסים
 }
 
-// עדכון מד ההתקדמות
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
     document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
 }
 
-// עצירת תהליך השליחה
 function stopSending() {
     if (isProcessing) {
         shouldStop = true;
     }
 }
 
-// שליחת הודעת טקסט
 async function sendTextMessage(chatId, message) {
-    const response = await fetch(window.apiBaseUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            chatId: chatId,
-            message: message
-        })
-    });
+    try {
+        const response = await fetch(window.apiBaseUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chatId: chatId,
+                message: message
+            })
+        });
 
-    if (!response.ok) {
-        const errorDetails = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
+        if (!response.ok) {
+            const errorDetails = await response.text();
+            let errorJson;
+            try {
+                errorJson = JSON.parse(errorDetails);
+            } catch (parseError) {
+                errorJson = { error: errorDetails };
+            }
+            throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
+        }
+        return await response.json();
+    } catch (error) {
+         console.error('Error in sendTextMessage:', error);
+        throw error;
     }
-
-    return response.json();
 }
 
-// שליחת הודעה עם תמונה
 async function sendImageMessage(chatId, message, imageUrl) {
-    const response = await fetch(window.apiSendFileUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            chatId: chatId,
-            caption: message,
-            urlFile: imageUrl,
-            fileName: 'image.jpg'
-        })
-    });
+     try{
+        const response = await fetch(window.apiSendFileUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chatId: chatId,
+                caption: message,
+                urlFile: imageUrl,
+                fileName: 'image.jpg'
+            })
+        });
 
-    if (!response.ok) {
-        const errorDetails = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
-    }
+         if (!response.ok) {
+             const errorDetails = await response.text();
+             let errorJson;
+             try {
+                 errorJson = JSON.parse(errorDetails);
+             } catch (parseError) {
+                 errorJson = { error: errorDetails };
+             }
+             throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
+         }
 
-    return response.json();
+         return await response.json();
+    } catch (error) {
+        console.error('Error in sendImageMessage:', error);
+       throw error;
+   }
 }
