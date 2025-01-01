@@ -3,35 +3,6 @@ let shouldStop = false;
 // מערך לשמירת הקבוצות
 let groups = [];
 
-// פונקציית הלוגים החדשה
-async function logToSheet(logData) {
-    try {
-        const logSheetUrl = `https://docs.google.com/spreadsheets/d/${window.ENV_sheetId}/gviz/tq?tqx=out:csv&sheet=log`;
-        const response = await fetch(logSheetUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                values: [[
-                    new Date().toISOString(),
-                    logData.groupName,
-                    logData.groupId,
-                    logData.status,
-                    logData.errorDetails || '',
-                    logData.apiResponse || ''
-                ]]
-            })
-        });
-        
-        if (!response.ok) {
-            console.error('Failed to log to sheet:', await response.text());
-        }
-    } catch (error) {
-        console.error('Error logging to sheet:', error);
-    }
-}
-
 // אתחול הדף
 window.addEventListener('configLoaded', () => {
     // אתחול הפרמטרים עם הערכים שנטענו
@@ -75,13 +46,20 @@ async function loadGroups(googleSheetsUrl) {
 
 // הגדרת מאזיני אירועים
 function setupEventListeners() {
+    // כפתור סינון עברית
     document.getElementById('filterHebrewButton').addEventListener('click', filterHebrewGroups);
+    // כפתור סינון ערבית
     document.getElementById('filterArabicButton').addEventListener('click', filterArabicGroups);
+    // חיפוש קבוצות
     document.getElementById('searchGroups').addEventListener('input', (e) => {
         const searchTerm = e.target.value.trim().toLowerCase();
         filterGroups(searchTerm);
     });
+
+    // כפתור שליחה
     document.getElementById('sendButton').addEventListener('click', startSending);
+    
+    // כפתור עצירה
     document.getElementById('stopButton').addEventListener('click', stopSending);
 }
 
@@ -103,6 +81,12 @@ function filterHebrewGroups() {
         const index = parseInt(element.getAttribute('data-index'));
         if (!isNaN(index) && index < groups.length) {
             const group = groups[index];
+            console.log(`Checking group ${index}:`, { 
+                name: group.name, 
+                tag: group.tag,
+                isHebrew: !group.tag.includes('#')
+            });
+            
             const isHebrewGroup = !group.tag || !group.tag.includes('#');
             element.style.display = isHebrewGroup ? '' : 'none';
         }
@@ -118,6 +102,12 @@ function filterArabicGroups() {
         const index = parseInt(element.getAttribute('data-index'));
         if (!isNaN(index) && index < groups.length) {
             const group = groups[index];
+            console.log(`Checking group ${index}:`, { 
+                name: group.name, 
+                tag: group.tag,
+                isArabic: group.tag?.includes('#')
+            });
+            
             const isArabicGroup = group.tag && group.tag.includes('#');
             element.style.display = isArabicGroup ? '' : 'none';
         }
@@ -165,11 +155,31 @@ function clearAll() {
     });
 }
 
-// פונקציית השליחה המשופרת עם ניסיונות חוזרים
+// פונקציה חדשה - שליחת הודעה עם ניסיונות חוזרים
 async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     const maxRetries = 3;
     let lastError = null;
     let apiResponse = null;
+
+    // הוספת סטטוס חדש לרשימה
+    const addStatusToList = (status, error = null) => {
+        const statusDiv = document.getElementById('sendingStatus');
+        const statusItem = document.createElement('div');
+        statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
+        const timestamp = new Date().toLocaleTimeString('he-IL');
+        statusItem.innerHTML = `
+            <div style="display: flex; justify-content: space-between;">
+                <span><strong>שעה:</strong> ${timestamp}</span>
+                <span class="status-badge" style="padding: 2px 8px; border-radius: 4px; background-color: ${error ? '#ffebee' : '#e8f5e9'}; color: ${error ? '#d32f2f' : '#2e7d32'}">
+                    ${error ? 'נכשל' : 'הצלחה'}
+                </span>
+            </div>
+            <strong>קבוצה:</strong> ${group.name}<br>
+            <strong>מזהה:</strong> ${group.id}<br>
+            ${error ? `<div style="color: #d32f2f; margin-top: 4px;"><strong>שגיאה:</strong> ${error}</div>` : ''}
+        `;
+        statusDiv.insertBefore(statusItem, statusDiv.firstChild);
+    };
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -179,21 +189,19 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                 apiResponse = await sendTextMessage(group.id, messageText);
             }
 
-            // לוג הצלחה
-            await logToSheet({
-                groupName: group.name,
-                groupId: group.id,
-                status: 'success',
-                apiResponse: JSON.stringify(apiResponse)
-            });
-
+            // עדכון סטטוס הצלחה
+            addStatusToList('נשלח בהצלחה');
             return true;
 
         } catch (error) {
             lastError = error;
             console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
 
-            // אם זו לא הפעם האחרונה, נחכה לפני ניסיון נוסף
+            if (attempt === maxRetries) {
+                // עדכון סטטוס כישלון
+                addStatusToList('שליחה נכשלה', error.message);
+            }
+
             if (attempt < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
                 continue;
@@ -201,19 +209,10 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
         }
     }
 
-    // לוג כישלון אחרי כל הניסיונות
-    await logToSheet({
-        groupName: group.name,
-        groupId: group.id,
-        status: 'failed',
-        errorDetails: lastError?.message || 'Unknown error',
-        apiResponse: apiResponse ? JSON.stringify(apiResponse) : ''
-    });
-
     return false;
 }
 
-// פונקציית השליחה הראשית המשופרת
+// פונקציית השליחה הראשית המעודכנת
 async function startSending() {
     const securityCode = document.getElementById('securityCode').value.trim();
     if (securityCode !== window.ENV_code) {
@@ -261,24 +260,16 @@ async function startSending() {
             } else {
                 results.failed++;
             }
-            updateProgress(results.success, selectedGroups.length);
+            updateProgress(results.success + results.failed, selectedGroups.length);
         } catch (error) {
             results.failed++;
             console.error(`Critical error with ${group.name}:`, error);
         }
 
-        if (!shouldStop) {
+        if (!shouldStop && (results.success + results.failed) < selectedGroups.length) {
             await new Promise(resolve => setTimeout(resolve, 10000)); // שמירה על ההשהיה המקורית
         }
     }
-
-    // סיכום בסיום
-    await logToSheet({
-        groupName: 'SUMMARY',
-        groupId: '-',
-        status: 'completed',
-        errorDetails: `Total: ${results.total}, Success: ${results.success}, Failed: ${results.failed}`
-    });
 
     isProcessing = false;
     updateUIForSending(false);
@@ -290,23 +281,22 @@ async function startSending() {
     }
 }
 
-// עצירת תהליך השליחה
-function stopSending() {
-    if (isProcessing) {
-        shouldStop = true;
-    }
-}
-
 // עדכון ממשק המשתמש בזמן שליחה
 function updateUIForSending(isSending) {
     document.getElementById('sendButton').style.display = isSending ? 'none' : 'block';
     document.getElementById('stopButton').style.display = isSending ? 'block' : 'none';
     document.getElementById('progressBar').style.display = isSending ? 'block' : 'none';
     document.getElementById('progressText').style.display = isSending ? 'block' : 'none';
+    document.getElementById('sendingStatus').style.display = isSending ? 'block' : 'none';
     
     document.getElementById('messageText').disabled = isSending;
     document.getElementById('imageUrl').disabled = isSending;
     document.getElementById('searchGroups').disabled = isSending;
+
+    // ניקוי רשימת הסטטוסים בתחילת שליחה חדשה
+    if (isSending) {
+        document.getElementById('sendingStatus').innerHTML = '';
+    }
 }
 
 // עדכון מד ההתקדמות
@@ -314,6 +304,13 @@ function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
     document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
+}
+
+// עצירת תהליך השליחה
+function stopSending() {
+    if (isProcessing) {
+        shouldStop = true;
+    }
 }
 
 // שליחת הודעת טקסט
