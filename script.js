@@ -1,6 +1,7 @@
 let isProcessing = false;
 let shouldStop = false;
 let groups = [];
+let sendResults = []; // מערך לשמירת תוצאות השליחה
 
 window.addEventListener('configLoaded', () => {
     window.apiBaseUrl = `https://7103.api.greenapi.com/waInstance${window.ENV_idInstance}/sendMessage/${window.ENV_apiTokenInstance}`;
@@ -125,43 +126,23 @@ function clearAll() {
     });
 }
 
+
 async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     const maxRetries = 3;
     let lastError = null;
     let apiResponse = null;
+    const chatIdRegex = /^(\d+@c\.us|\d+-\d+@g\.us)$/;
 
-     const addStatusToList = (status, error = null, apiResponse = null) => {
-        const statusDiv = document.getElementById('sendingStatus');
-        const statusItem = document.createElement('div');
-        statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
-        const timestamp = new Date().toLocaleTimeString('he-IL');
-        
-        let responseStatus = '';
-        if (apiResponse) {
-             if (apiResponse.idMessage) {
-                responseStatus = `<div style="color: #2e7d32;">✓ ההודעה נשלחה בהצלחה</div>`;
-            } else if (apiResponse.error || apiResponse.message) {
-                responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה</div>`;
-            } else {
-                 responseStatus = `<div style="color: #d32f2f;">⚠️ התקבל אישור חלקי - יתכן שההודעה לא נשלחה (ללא פרטים נוספים)</div>`;
-            }
-        }
-
-        statusItem.innerHTML = `
-            <div style="display: flex; justify-content: space-between;">
-                <span><strong>שעה:</strong> ${timestamp}</span>
-                <span class="status-badge" style="padding: 2px 8px; border-radius: 4px; background-color: ${error ? '#ffebee' : '#e8f5e9'}; color: ${error ? '#d32f2f' : '#2e7d32'}">
-                    ${error ? 'נכשל' : 'הצלחה'}
-                </span>
-            </div>
-            <strong>קבוצה:</strong> ${group.name}<br>
-            <strong>מזהה:</strong> ${group.id}<br>
-            ${responseStatus}
-            ${error ? `<div style="color: #d32f2f; margin-top: 4px;"><strong>שגיאה:</strong> ${error}</div>` : ''}
-            ${apiResponse ? `<div style="color: #1976d2; margin-top: 4px;"><strong>מזהה הודעה:</strong> ${apiResponse.idMessage || 'לא התקבל'}</div>` : ''}
-        `;
-        statusDiv.insertBefore(statusItem, statusDiv.firstChild);
-    };
+    if (!chatIdRegex.test(group.id)) {
+         sendResults.push({
+            groupName: group.name,
+            chatId: group.id,
+            status: 'failed',
+            error: 'פורמט מזהה קבוצה לא תקין',
+              fullResponse: null
+          });
+        return false;
+    }
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -170,26 +151,60 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
             } else {
                 apiResponse = await sendTextMessage(group.id, messageText);
             }
-             if (!apiResponse) {
+
+            if (!apiResponse) {
+                  sendResults.push({
+                      groupName: group.name,
+                    chatId: group.id,
+                    status: 'failed',
+                      error: 'תגובה ריקה מהשרת',
+                      fullResponse: null
+                    });
                   throw new Error('תגובה ריקה מהשרת');
-              }
+            }
 
-              if (apiResponse.error || apiResponse.message) {
+             if (apiResponse.error || apiResponse.message) {
+                    sendResults.push({
+                        groupName: group.name,
+                        chatId: group.id,
+                        status: 'failed',
+                        error: `תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`,
+                        fullResponse: apiResponse
+                     });
                     throw new Error(`תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`);
-              }
-            
-              if (!apiResponse.idMessage) {
-                 throw new Error('תגובה לא תקינה מהשרת: ' + JSON.stringify(apiResponse));
-              }
-
-            addStatusToList('נשלח בהצלחה', null, apiResponse);
+            }
+             if (!apiResponse.idMessage) {
+                  sendResults.push({
+                        groupName: group.name,
+                       chatId: group.id,
+                      status: 'warning',
+                      error: 'תגובה לא תקינה מהשרת (אין idMessage)',
+                       fullResponse: apiResponse
+                     });
+                   console.warn(`תגובה לא תקינה מהשרת (אין idMessage) for ${group.name}:`, apiResponse);
+                  
+            } else {
+                  sendResults.push({
+                    groupName: group.name,
+                    chatId: group.id,
+                    status: 'success',
+                    idMessage: apiResponse.idMessage,
+                    fullResponse: apiResponse
+                });
+            }
             return true;
 
         } catch (error) {
             lastError = error;
-             console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
+            console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
             if (attempt === maxRetries) {
-                addStatusToList('שליחה נכשלה', error.message, apiResponse);
+              sendResults.push({
+                    groupName: group.name,
+                    chatId: group.id,
+                    status: 'failed',
+                    error: error.message,
+                    fullResponse: apiResponse
+                });
             }
             if (attempt < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
@@ -198,6 +213,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     }
     return false;
 }
+
 
 async function startSending() {
     const securityCode = document.getElementById('securityCode').value.trim();
@@ -227,39 +243,37 @@ async function startSending() {
     isProcessing = true;
     shouldStop = false;
     updateUIForSending(true);
+    sendResults = [];
 
     const results = {
         total: selectedGroups.length,
         success: 0,
-        failed: 0
+        failed: 0,
+       warning: 0
     };
 
-    for (const group of selectedGroups) {
-        if (shouldStop) {
-            break;
+    const sendPromises = selectedGroups.map(group =>
+        sendMessageWithRetry(group, messageText, imageUrl)
+    );
+     await Promise.all(sendPromises);
+
+    sendResults.forEach(result => {
+       if (result.status === 'success') {
+           results.success++;
+       } else if (result.status === 'failed') {
+           results.failed++;
+        } else if (result.status === 'warning') {
+             results.warning++;
         }
-         try {
-             const success = await sendMessageWithRetry(group, messageText, imageUrl);
-             if (success) {
-                 results.success++;
-             } else {
-                 results.failed++;
-             }
-             updateProgress(results.success + results.failed, selectedGroups.length);
-         } catch (error) {
-             results.failed++;
-             console.error(`Critical error with ${group.name}:`, error);
-         }
+    });
 
 
-        if (!shouldStop && (results.success + results.failed) < selectedGroups.length) {
-            await new Promise(resolve => setTimeout(resolve, 10000));
-        }
-    }
-
+    updateProgress(results.success + results.failed + results.warning, selectedGroups.length);
     isProcessing = false;
     updateUIForSending(false);
+    displaySendResults();
 }
+
 
 function updateUIForSending(isSending) {
     document.getElementById('sendButton').style.display = isSending ? 'none' : 'block';
@@ -277,11 +291,13 @@ function updateUIForSending(isSending) {
     }
 }
 
+
 function updateProgress(current, total) {
     const percentage = (current / total) * 100;
     document.getElementById('progressFill').style.width = `${percentage}%`;
     document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
 }
+
 
 function stopSending() {
     if (isProcessing) {
@@ -290,7 +306,7 @@ function stopSending() {
 }
 
 async function sendTextMessage(chatId, message) {
-    try {
+     try {
         const response = await fetch(window.apiBaseUrl, {
             method: 'POST',
             headers: {
@@ -312,12 +328,12 @@ async function sendTextMessage(chatId, message) {
             }
             throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
          }
-       const responseData =  await response.json();
-       console.log("API Response (Success):", responseData);
-       return responseData;
+        const responseData =  await response.json();
+        console.log("API Response (Success):", responseData);
+        return responseData;
     } catch (error) {
-        console.error('Error in sendTextMessage:', error);
-        throw error;
+       console.error('Error in sendTextMessage:', error);
+         throw error;
     }
 }
 
@@ -336,15 +352,15 @@ async function sendImageMessage(chatId, message, imageUrl) {
             })
         });
 
-        if (!response.ok) {
-            const errorDetails = await response.text();
-             let errorJson;
-             try {
-                 errorJson = JSON.parse(errorDetails);
-             } catch (parseError) {
+          if (!response.ok) {
+             const errorDetails = await response.text();
+            let errorJson;
+            try {
+                errorJson = JSON.parse(errorDetails);
+            } catch (parseError) {
                  errorJson = { error: errorDetails };
-             }
-             throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
+            }
+            throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
          }
         const responseData = await response.json();
         console.log("API Response (Success):", responseData);
@@ -353,5 +369,37 @@ async function sendImageMessage(chatId, message, imageUrl) {
     } catch (error) {
         console.error('Error in sendImageMessage:', error);
        throw error;
-   }
+    }
 }
+
+function displaySendResults() {
+    const statusDiv = document.getElementById('sendingStatus');
+    statusDiv.innerHTML = '';
+  
+    const table = document.createElement('table');
+    table.className = 'results-table';
+  
+    const headerRow = table.insertRow();
+    headerRow.innerHTML = `
+      <th>קבוצה</th>
+      <th>מזהה</th>
+      <th>סטטוס</th>
+      <th>שגיאה</th>
+      <th>מזהה הודעה</th>
+      <th>תגובה מלאה</th>
+    `;
+    
+    sendResults.forEach(result => {
+      const row = table.insertRow();
+      row.innerHTML = `
+        <td>${result.groupName}</td>
+        <td>${result.chatId}</td>
+        <td class="${result.status === 'success' ? 'status-success' : (result.status === 'warning' ? 'status-warning' : 'status-error')}">${result.status === 'success' ? 'הצלחה' : (result.status === 'warning' ? 'אזהרה' : 'כישלון')}</td>
+        <td>${result.error || ''}</td>
+        <td>${result.idMessage || ''}</td>
+        <td><pre>${result.fullResponse ? JSON.stringify(result.fullResponse, null, 2) : ''}</pre></td>
+      `;
+    });
+  
+    statusDiv.appendChild(table);
+  }
