@@ -126,23 +126,12 @@ function clearAll() {
     });
 }
 
+
 async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     const maxRetries = 3;
     let lastError = null;
     let apiResponse = null;
-    // const chatIdRegex = /^(\d+@c\.us|\d+-\d+@g\.us)$/; // בדיקה מיותרת הוסרה
-
-    // if (!chatIdRegex.test(group.id)) {  // בדיקה מיותרת הוסרה
-    //      sendResults.push({
-    //         groupName: group.name,
-    //         chatId: group.id,
-    //         status: 'failed',
-    //         error: 'פורמט מזהה קבוצה לא תקין',
-    //           fullResponse: null
-    //       });
-    //     return false;
-    // }
-
+    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             if (imageUrl) {
@@ -151,7 +140,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                 apiResponse = await sendTextMessage(group.id, messageText);
             }
 
-            if (!apiResponse) {
+           if (!apiResponse) {
                   sendResults.push({
                       groupName: group.name,
                     chatId: group.id,
@@ -162,7 +151,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                   throw new Error('תגובה ריקה מהשרת');
             }
 
-            if (apiResponse.error || apiResponse.message) {
+             if (apiResponse.error || apiResponse.message) {
                     sendResults.push({
                         groupName: group.name,
                         chatId: group.id,
@@ -191,7 +180,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                     fullResponse: apiResponse
                 });
             }
-            return true;
+           return true;
 
         } catch (error) {
             lastError = error;
@@ -212,7 +201,6 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
     }
     return false;
 }
-
 
 async function startSending() {
     const securityCode = document.getElementById('securityCode').value.trim();
@@ -251,29 +239,41 @@ async function startSending() {
        warning: 0
     };
 
-    const sendPromises = selectedGroups.map(group =>
-        sendMessageWithRetry(group, messageText, imageUrl)
-    );
-    
-     await Promise.all(sendPromises);
-
-    sendResults.forEach(result => {
-       if (result.status === 'success') {
-           results.success++;
-       } else if (result.status === 'failed') {
-           results.failed++;
-        } else if (result.status === 'warning') {
-             results.warning++;
+    for (const group of selectedGroups) {
+         if (shouldStop) {
+            break;
+         }
+       try {
+             const success = await sendMessageWithRetry(group, messageText, imageUrl);
+             if (success) {
+                results.success++;
+             } else {
+                results.failed++;
+             }
+        }  catch (error) {
+             results.failed++;
+            console.error(`Critical error with ${group.name}:`, error);
+       }
+        if (!shouldStop && (results.success + results.failed) < selectedGroups.length) {
+            await new Promise(resolve => setTimeout(resolve, 10000)); // שמירה על ההשהיה המקורית
         }
-    });
-    
+    }
+
+     sendResults.forEach(result => {
+        if (result.status === 'success') {
+            results.success++;
+        } else if (result.status === 'failed') {
+            results.failed++;
+        }  else if (result.status === 'warning') {
+           results.warning++;
+        }
+     });
 
     updateProgress(results.success + results.failed + results.warning, selectedGroups.length);
     isProcessing = false;
     updateUIForSending(false);
     displaySendResults();
 }
-
 
 function updateUIForSending(isSending) {
     document.getElementById('sendButton').style.display = isSending ? 'none' : 'block';
@@ -297,13 +297,11 @@ function updateProgress(current, total) {
     document.getElementById('progressText').textContent = `נשלחו ${current} מתוך ${total} הודעות`;
 }
 
-
 function stopSending() {
     if (isProcessing) {
         shouldStop = true;
     }
 }
-
 
 async function sendTextMessage(chatId, message) {
     try {
@@ -351,7 +349,8 @@ async function sendImageMessage(chatId, message, imageUrl) {
                 fileName: 'image.jpg'
             })
         });
-         if (!response.ok) {
+
+          if (!response.ok) {
              const errorDetails = await response.text();
             let errorJson;
             try {
@@ -362,15 +361,13 @@ async function sendImageMessage(chatId, message, imageUrl) {
              throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
          }
         const responseData = await response.json();
-         console.log("API Response (Success):", responseData);
-        return responseData;
-
+        console.log("API Response (Success):", responseData);
+         return responseData;
     } catch (error) {
         console.error('Error in sendImageMessage:', error);
        throw error;
     }
 }
-
 
 function displaySendResults() {
     const statusDiv = document.getElementById('sendingStatus');
