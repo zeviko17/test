@@ -126,11 +126,11 @@ function clearAll() {
 }
 
 async function sendMessageWithRetry(group, messageText, imageUrl = null) {
-    const maxRetries = 3;
+    const maxRetries = 1; // שינוי ל-1 ניסיון במקום 3
     let lastError = null;
     let apiResponse = null;
 
-      const addStatusToList = (status, error = null, apiResponse = null) => {
+    const addStatusToList = (status, error = null, apiResponse = null) => {
         const statusDiv = document.getElementById('sendingStatus');
         const statusItem = document.createElement('div');
         statusItem.className = `status-item ${error ? 'status-error' : 'status-success'}`;
