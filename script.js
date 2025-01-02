@@ -4,8 +4,8 @@ let groups = [];
 let sendResults = []; // מערך לשמירת תוצאות השליחה
 
 window.addEventListener('configLoaded', () => {
-    window.apiBaseUrl = `https://gate.whapi.cloud/messages/text`;  // שינוי לכתובת החדשה עבור הודעות טקסט ותמונה
-   window.apiTokenInstance = window.ENV_apiTokenInstance;
+    window.apiBaseUrl = `https://gate.whapi.cloud/messages`; // שינוי לכתובת הבסיסית
+    window.apiTokenInstance = window.ENV_apiTokenInstance;
     const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${window.ENV_sheetId}/gviz/tq?tqx=out:json&sheet=קבוצות%20להודעות`;
     
     console.log('apiTokenInstance:', window.ENV_apiTokenInstance);
@@ -330,44 +330,54 @@ function stopSending() {
 }
 
 async function sendTextMessage(chatId, message, imageUrl = null) {
-   try {
+    try {
         const headers = {
             'Content-Type': 'application/json',
-             'Authorization': `Bearer ${window.apiTokenInstance}`
-         };
-        const body = {
-            to: chatId
+            'Authorization': `Bearer ${window.apiTokenInstance}`
         };
+        
+        let endpoint, body;
+        
+        if (imageUrl) {
+            endpoint = `${window.apiBaseUrl}/image`;
+            body = {
+                to: chatId,
+                media: {
+                    url: imageUrl
+                },
+                caption: message // שימוש ב-caption במקום body לתמונות
+            };
+        } else {
+            endpoint = `${window.apiBaseUrl}/text`;
+            body = {
+                to: chatId,
+                body: message
+            };
+        }
 
-        if(imageUrl)
-          body.media= {
-             url: imageUrl
-         }
-        else
-          body.body=message
-
-         const response = await fetch(window.apiBaseUrl, {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: headers,
             body: JSON.stringify(body)
         });
-         if (!response.ok) {
-             const errorDetails = await response.text();
+
+        if (!response.ok) {
+            const errorDetails = await response.text();
             let errorJson;
             try {
-               errorJson = JSON.parse(errorDetails);
-             } catch (parseError) {
+                errorJson = JSON.parse(errorDetails);
+            } catch (parseError) {
                 errorJson = { error: errorDetails };
-             }
-             throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
+            }
+            throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
         }
-       const responseData =  await response.json();
-      console.log("API Response (Success):", responseData);
-      return responseData;
+        const responseData =  await response.json();
+        console.log("API Response (Success):", responseData);
+        return responseData;
 
     } catch (error) {
-         console.error('Error in sendTextMessage:', error);
-          throw error;
+        console.error('Error in sendTextMessage:', error);
+        throw error;
     }
 }
 
