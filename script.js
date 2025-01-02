@@ -264,28 +264,27 @@ async function startSending() {
         warning: 0
     };
 
-
-      for (const group of selectedGroups) {
-          if (shouldStop) {
+    for (const group of selectedGroups) {
+        // רק אם לחצו על כפתור העצירה
+        if (shouldStop) {
+            console.log('Stopping sending process by user request');
             break;
         }
-         try {
-               const success = await sendMessageWithRetry(group, messageText, imageUrl);
-               if (success) {
-                  results.success++;
-              } else {
-                   results.failed++;
-               }
-        }  catch (error) {
-            results.failed++;
-              console.error(`Critical error with ${group.name}:`, error);
+
+        try {
+            const success = await sendMessageWithRetry(group, messageText, imageUrl);
+            console.log(`Sending to group ${group.name} ${success ? 'succeeded' : 'failed'}`);
+        } catch (error) {
+            console.error(`Error sending to ${group.name}:`, error);
         }
 
-        if (!shouldStop  && (results.success + results.failed + results.warning) < selectedGroups.length) {
-          await new Promise(resolve => setTimeout(resolve, 10000)); // שמירה על ההשהיה המקורית
+        // המתנה בין הודעות רק אם זו לא הקבוצה האחרונה
+        if (!shouldStop && selectedGroups.indexOf(group) < selectedGroups.length - 1) {
+            console.log('Waiting 10 seconds before next message...');
+            await new Promise(resolve => setTimeout(resolve, 10000));
         }
-     }
-       
+    }
+
     sendResults.forEach(result => {
         if (result.status === 'success') {
             results.success++;
@@ -360,6 +359,10 @@ async function sendTextMessage(chatId, message, imageUrl = null) {
             body: JSON.stringify(body)
         });
 
+        if (response.status === 403) {
+            throw new Error('אין הרשאה לשלוח לקבוצה זו. יש לוודא שהמספר מחובר לקבוצה.');
+        }
+
         if (!response.ok) {
             const errorDetails = await response.text();
             let errorJson;
@@ -368,9 +371,10 @@ async function sendTextMessage(chatId, message, imageUrl = null) {
             } catch (parseError) {
                 errorJson = { error: errorDetails };
             }
-            throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorJson)}`);
+            throw new Error(`שגיאה בשליחה: ${errorJson.error?.message || 'שגיאה לא ידועה'}`);
         }
-        const responseData =  await response.json();
+
+        const responseData = await response.json();
         console.log("API Response (Success):", responseData);
         return responseData;
 
