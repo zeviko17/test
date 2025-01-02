@@ -296,6 +296,7 @@ async function startSending() {
         }
     });
     updateProgress(results.success + results.failed + results.warning, selectedGroups.length);
+
     isProcessing = false;
     updateUIForSending(false);
     displaySendResults();
