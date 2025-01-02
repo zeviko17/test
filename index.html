@@ -284,11 +284,11 @@
             <div class="message-area">
                 <div class="input-group">
                     <label for="messageText">תוכן ההודעה:</label>
-                    <textarea id="messageText" placeholder="הקלד את תוכן ההודעה כאן..." required></textarea>
+                    <textarea id="messageText" placeholder="הקלד את תוכן ההודעה כאן..." required autocomplete="off"></textarea>
                 </div>
                 <div class="input-group">
                     <label for="imageUrl">קישור לתמונה (אופציונלי):</label>
-                    <input type="text" id="imageUrl" placeholder="הכנס קישור לתמונה">
+                    <input type="text" id="imageUrl" placeholder="הכנס קישור לתמונה" autocomplete="off">
                 </div>
             </div>
         </div>
@@ -310,7 +310,7 @@
         <div class="send-section">
             <div class="input-group">
                 <label for="securityCode">הכנס קוד לשליחה:</label>
-                <input type="text" id="securityCode" placeholder="הכנס קוד לשליחה">
+                <input type="text" id="securityCode" placeholder="הכנס קוד לשליחה" autocomplete="off">
             </div>
             <button id="sendButton" class="primary">שלח לקבוצות שנבחרו</button>
             <button id="stopButton" style="display: none;">עצור שליחה</button>
