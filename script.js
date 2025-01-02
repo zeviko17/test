@@ -406,4 +406,15 @@ function displaySendResults() {
     });
   
     statusDiv.appendChild(table);
-  }
+    
+    // הוספת שורת סיום
+    const summaryDiv = document.createElement('div');
+    summaryDiv.style.textAlign = 'center';
+    summaryDiv.style.marginTop = '20px';
+    summaryDiv.style.padding = '10px';
+    summaryDiv.style.backgroundColor = '#e8f5e9';
+    summaryDiv.style.borderRadius = '4px';
+    summaryDiv.style.fontWeight = 'bold';
+    summaryDiv.innerHTML = '✅ תהליך השליחה הסתיים';
+    statusDiv.appendChild(summaryDiv);
+}
