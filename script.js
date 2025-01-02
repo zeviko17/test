@@ -336,23 +336,20 @@ async function sendTextMessage(chatId, message, imageUrl = null) {
             'Authorization': `Bearer ${window.apiTokenInstance}`
         };
         
-        // בודק אם יש תמונה
+        let endpoint, body;
+        
         if (imageUrl) {
-            // אם יש תמונה - שולח לאנדפוינט של תמונות
             endpoint = `${window.apiBaseUrl}/image`;
             body = {
                 to: chatId,
-                media: {
-                    url: imageUrl    // קישור לתמונה
-                },
-                caption: message     // הטקסט יופיע ככיתוב מתחת לתמונה
+                media: imageUrl,    // שינוי: שליחת ה-URL ישירות כ-string
+                caption: message
             };
         } else {
-            // אם אין תמונה - שולח לאנדפוינט של טקסט בלבד
             endpoint = `${window.apiBaseUrl}/text`;
             body = {
                 to: chatId,
-                body: message        // שליחת טקסט בלבד
+                body: message
             };
         }
 
