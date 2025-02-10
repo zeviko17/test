@@ -281,7 +281,7 @@ async function startSending() {
         // המתנה בין הודעות רק אם זו לא הקבוצה האחרונה
         if (!shouldStop && selectedGroups.indexOf(group) < selectedGroups.length - 1) {
             console.log('Waiting 10 seconds before next message...');
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 15000));
         }
     }
 
