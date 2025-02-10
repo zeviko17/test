@@ -13,7 +13,15 @@ window.addEventListener('configLoaded', () => {
 
     loadGroups(googleSheetsUrl);
     setupEventListeners();
+    setupPlaceholders(); // הוספת קריאה לפונקציה להגדרת placeholders
 });
+
+function setupPlaceholders() {
+    document.getElementById('messageText').placeholder = 'הקלד את תוכן ההודעה כאן...';
+    document.getElementById('imageUrl').placeholder = 'הכנס קישור לתמונה';
+    document.getElementById('securityCode').placeholder = 'הכנס קוד לשליחה';
+}
+
 
 async function loadGroups(googleSheetsUrl) {
     console.log('Loading groups from updated URL:', googleSheetsUrl);
@@ -162,7 +170,7 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
         try {
             if (attempt > 1) {
                 addStatusToList('מנסה שוב', group.name, group.id, attempt);
-                await new Promise(resolve => setTimeout(resolve, 10000)); // המתנה 10 שניות בין ניסיונות
+                await new Promise(resolve => setTimeout(resolve, 20000)); // המתנה 20 שניות בין ניסיונות
             }
             apiResponse = await sendTextMessage(group.id, messageText, imageUrl);
 
