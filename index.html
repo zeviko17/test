@@ -1,3 +1,4 @@
+index.html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -46,7 +47,7 @@
             color: #212529;
         }
 
-        textarea, input[type="text"] {
+        textarea, input[type="text"], input[type="number"] {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #dee2e6;
@@ -60,7 +61,7 @@
             min-height: 100px;
         }
 
-        textarea:focus, input[type="text"]:focus {
+        textarea:focus, input[type="text"]:focus, input[type="number"]:focus {
             outline: none;
             border-color: #0d6efd;
             box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
@@ -274,6 +275,17 @@
                 flex-direction: column;
             }
         }
+
+        .send-options {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1rem;
+        }
+
+        .send-options .input-group {
+            margin-bottom: 0; /* Reset margin for input-group inside send-options */
+        }
     </style>
 </head>
 <body>
@@ -312,7 +324,14 @@
                 <label for="securityCode">הכנס קוד לשליחה:</label>
                 <input type="text" id="securityCode" placeholder="הכנס קוד לשליחה" autocomplete="off">
             </div>
-            <button id="sendButton" class="primary">שלח לקבוצות שנבחרו</button>
+            <div class="send-options">
+                <div class="input-group" style="width: 150px;">
+                    <label for="delaySeconds">השהייה בין הודעות (שניות):</label>
+                    <input type="number" id="delaySeconds" value="15" min="0" step="1">
+                </div>
+                <button id="sendButton" class="primary">שלח לקבוצות שנבחרו</button>
+            </div>
+
             <button id="stopButton" style="display: none;">עצור שליחה</button>
             <div id="progressBar" class="progress-bar" style="display: none;">
                 <div id="progressFill" class="progress-fill"></div>
