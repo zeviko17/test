@@ -133,51 +133,44 @@ function clearAll() {
 }
 
 async function sendMessageWithRetry(group, messageText, imageUrl = null) {
-    const maxRetries = 1; // שינוי ל-1 ניסיון במקום 3
+    const maxRetries = 2; // One initial attempt plus one retry
     let lastError = null;
     let apiResponse = null;
 
-    const addStatusToList = (status, error = null, apiResponse = null) => {
+    const addStatusToList = (status, error = null, attempt = 1) => {
         const statusDiv = document.getElementById('sendingStatus');
         const statusItem = document.createElement('div');
         statusItem.className = 'status-item';
         const timestamp = new Date().toLocaleTimeString('he-IL');
 
-        statusItem.innerHTML = `
+        let statusHtml = `
             <div style="display: flex; justify-content: space-between;">
                 <span><strong>שעה:</strong> ${timestamp}</span>
+                <span><strong>ניסיון:</strong> ${attempt}/${maxRetries}</span>
             </div>
             <strong>קבוצה:</strong> ${group.name}<br>
-            <strong>מזהה:</strong> ${group.id}
+            <strong>מזהה:</strong> ${group.id}<br>
+            <strong>סטטוס:</strong> ${status}
         `;
+
+        if (error) {
+            statusHtml += `<br><strong>שגיאה:</strong> <span style="color: red;">${error}</span>`;
+        }
+
+        statusItem.innerHTML = statusHtml;
         statusDiv.insertBefore(statusItem, statusDiv.firstChild);
     };
 
-
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
+            addStatusToList(`מנסה לשלוח...`, null, attempt);
             apiResponse = await sendTextMessage(group.id, messageText, imageUrl);
 
             if (!apiResponse) {
-                sendResults.push({
-                    groupName: group.name,
-                    chatId: group.id,
-                    status: 'failed',
-                    error: 'תגובה ריקה מהשרת',
-                    fullResponse: null
-                });
-                addStatusToList('שליחה נכשלה', 'תגובה ריקה מהשרת', null);
                 throw new Error('תגובה ריקה מהשרת');
             }
+
             if (apiResponse.error) {
-                sendResults.push({
-                    groupName: group.name,
-                    chatId: group.id,
-                    status: 'failed',
-                    error: `תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`,
-                    fullResponse: apiResponse
-                });
-                addStatusToList('שליחה נכשלה', `תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`, apiResponse);
                 throw new Error(`תגובת שגיאה מהשרת: ${JSON.stringify(apiResponse)}`);
             }
 
@@ -187,47 +180,34 @@ async function sendMessageWithRetry(group, messageText, imageUrl = null) {
                     chatId: group.id,
                     status: 'success',
                     messageId: apiResponse.message.id,
-                    fullResponse: apiResponse
+                    fullResponse: apiResponse,
+                    attempts: attempt
                 });
-                addStatusToList('נשלח בהצלחה', null, apiResponse);
+                addStatusToList('✅ נשלח בהצלחה', null, attempt);
                 return true;
-            } else if (apiResponse.sent && apiResponse.message?.status === 'pending') {
-                sendResults.push({
-                    groupName: group.name,
-                    chatId: group.id,
-                    status: 'warning',
-                    error: 'התקבל סטטוס "pending"',
-                    fullResponse: apiResponse
-                });
-                addStatusToList('אזהרה', 'התקבל סטטוס "pending"', apiResponse);
-                console.warn(`תגובה מהשרת (סטטוס pending) for ${group.name}:`, apiResponse);
-                return true; //אם הסטטוס pending אז אל תנסה שוב
+            } else {
+                throw new Error(apiResponse.message?.status === 'pending' ? 
+                    'ההודעה ממתינה לאישור' : 'סטטוס לא מוכר או חסר');
+            }
+        } catch (error) {
+            lastError = error;
+            console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
+            
+            addStatusToList('❌ שליחה נכשלה', error.message, attempt);
+
+            if (attempt < maxRetries) {
+                const retryDelay = 20000; // 20 seconds delay before retry
+                addStatusToList(`ממתין ${retryDelay/1000} שניות לניסיון נוסף...`, null, attempt);
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
             } else {
                 sendResults.push({
                     groupName: group.name,
                     chatId: group.id,
                     status: 'failed',
-                    error: 'סטטוס לא מוכר או חסר',
-                    fullResponse: apiResponse
-                });
-                addStatusToList('שליחה נכשלה', 'סטטוס לא מוכר או חסר', apiResponse);
-                throw new Error('סטטוס לא מוכר או חסר');
-            }
-        } catch (error) {
-            lastError = error;
-            console.error(`Attempt ${attempt} failed for ${group.name}:`, error);
-            if (attempt === maxRetries) {
-                sendResults.push({
-                    groupName: group.name,
-                    chatId: group.id,
-                    status: 'failed',
                     error: error.message,
-                    fullResponse: apiResponse
+                    fullResponse: apiResponse,
+                    attempts: attempt
                 });
-                addStatusToList('שליחה נכשלה', error.message, apiResponse);
-            }
-            if (attempt < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
             }
         }
     }
@@ -403,30 +383,47 @@ async function sendTextMessage(chatId, message, imageUrl = null) {
     }
 }
 
+
 function displaySendResults() {
     const statusDiv = document.getElementById('sendingStatus');
     statusDiv.innerHTML = '';
 
     const table = document.createElement('table');
     table.className = 'results-table';
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginTop = '20px';
 
     const headerRow = table.insertRow();
     headerRow.innerHTML = `
-      <th>קבוצה</th>
-      <th>מזהה</th>
+        <th style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa;">קבוצה</th>
+        <th style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa;">מזהה</th>
+        <th style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa;">סטטוס</th>
+        <th style="padding: 8px; border: 1px solid #ddd; background-color: #f8f9fa;">ניסיונות</th>
     `;
 
     sendResults.forEach(result => {
         const row = table.insertRow();
+        const statusStyle = result.status === 'success' ? 'color: green;' : 'color: red;';
+        
         row.innerHTML = `
-        <td>${result.groupName}</td>
-        <td>${result.chatId}</td>
-      `;
+            <td style="padding: 8px; border: 1px solid #ddd;">${result.groupName}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${result.chatId}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; ${statusStyle}">
+                ${result.status === 'success' ? '✅ נשלח בהצלחה' : `❌ נכשל: ${result.error}`}
+            </td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${result.attempts}/${maxRetries}</td>
+        `;
     });
 
     statusDiv.appendChild(table);
 
-    // הוספת שורת סיום
+    // Summary statistics
+    const summary = sendResults.reduce((acc, result) => {
+        acc[result.status] = (acc[result.status] || 0) + 1;
+        return acc;
+    }, {});
+
     const summaryDiv = document.createElement('div');
     summaryDiv.style.textAlign = 'center';
     summaryDiv.style.marginTop = '20px';
@@ -434,6 +431,11 @@ function displaySendResults() {
     summaryDiv.style.backgroundColor = '#e8f5e9';
     summaryDiv.style.borderRadius = '4px';
     summaryDiv.style.fontWeight = 'bold';
-    summaryDiv.innerHTML = '✅ תהליך השליחה הסתיים';
+    summaryDiv.innerHTML = `
+        סיכום שליחה:<br>
+        ✅ הצלחות: ${summary.success || 0}<br>
+        ❌ כשלונות: ${summary.failed || 0}<br>
+        תהליך השליחה הסתיים
+    `;
     statusDiv.appendChild(summaryDiv);
 }
